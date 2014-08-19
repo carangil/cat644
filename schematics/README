@@ -1,0 +1,6 @@
+.sch and .sym files are in gEDA format.
+The 'schematics' folder must be added to your gEDA configuration as a library.
+
+'fullcomputer.sch' contains the entire design, and is provided in both eps and png formats.  
+
+
