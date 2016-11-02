@@ -1,0 +1,238 @@
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:pc_connectors
+LIBS:osc
+LIBS:cat644-cache
+EELAYER 25 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 2 4
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L SPX2920U-5.0 U5
+U 1 1 5812D0B4
+P 5850 3400
+F 0 "U5" H 5850 3650 50  0000 C CNN
+F 1 "7805" H 5850 3600 50  0000 C CNN
+F 2 "TO_SOT_Packages_THT:TO-220_Neutral123_Vertical" H 5850 3500 50  0001 C CIN
+F 3 "" H 5850 3400 50  0000 C CNN
+	1    5850 3400
+	1    0    0    -1  
+$EndComp
+$Comp
+L D D1
+U 1 1 5812D701
+P 4400 3350
+F 0 "D1" H 4400 3450 50  0000 C CNN
+F 1 "1N4001" H 4400 3250 50  0000 C CNN
+F 2 "Diodes_ThroughHole:Diode_DO-41_SOD81_Vertical_AnodeUp" H 4400 3350 50  0001 C CNN
+F 3 "" H 4400 3350 50  0000 C CNN
+	1    4400 3350
+	-1   0    0    1   
+$EndComp
+$Comp
+L CP1 C1
+U 1 1 5812D874
+P 4950 3650
+F 0 "C1" H 4975 3750 50  0000 L CNN
+F 1 "470uF" H 4975 3550 50  0000 L CNN
+F 2 "Discret:C2V8" H 4950 3650 50  0001 C CNN
+F 3 "" H 4950 3650 50  0000 C CNN
+	1    4950 3650
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R8
+U 1 1 5812D907
+P 6900 3350
+F 0 "R8" V 6980 3350 50  0000 C CNN
+F 1 "470" V 6900 3350 50  0000 C CNN
+F 2 "Resistors_ThroughHole:Resistor_Vertical_RM5mm" V 6830 3350 50  0001 C CNN
+F 3 "" H 6900 3350 50  0000 C CNN
+	1    6900 3350
+	0    1    1    0   
+$EndComp
+$Comp
+L LED D2
+U 1 1 5812DAB2
+P 7500 3350
+F 0 "D2" H 7500 3450 50  0000 C CNN
+F 1 "LED" H 7500 3250 50  0000 C CNN
+F 2 "LEDs:LED-5MM" H 7500 3350 50  0001 C CNN
+F 3 "" H 7500 3350 50  0000 C CNN
+	1    7500 3350
+	-1   0    0    1   
+$EndComp
+$Comp
+L GND #PWR07
+U 1 1 5812DF87
+P 4950 3950
+F 0 "#PWR07" H 4950 3700 50  0001 C CNN
+F 1 "GND" H 4950 3800 50  0000 C CNN
+F 2 "" H 4950 3950 50  0000 C CNN
+F 3 "" H 4950 3950 50  0000 C CNN
+	1    4950 3950
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR08
+U 1 1 5812DFA9
+P 5850 3750
+F 0 "#PWR08" H 5850 3500 50  0001 C CNN
+F 1 "GND" H 5850 3600 50  0000 C CNN
+F 2 "" H 5850 3750 50  0000 C CNN
+F 3 "" H 5850 3750 50  0000 C CNN
+	1    5850 3750
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR09
+U 1 1 5812DFCB
+P 5850 5100
+F 0 "#PWR09" H 5850 4850 50  0001 C CNN
+F 1 "GND" H 5850 4950 50  0000 C CNN
+F 2 "" H 5850 5100 50  0000 C CNN
+F 3 "" H 5850 5100 50  0000 C CNN
+	1    5850 5100
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR010
+U 1 1 5812E044
+P 3800 3700
+F 0 "#PWR010" H 3800 3450 50  0001 C CNN
+F 1 "GND" H 3800 3550 50  0000 C CNN
+F 2 "" H 3800 3700 50  0000 C CNN
+F 3 "" H 3800 3700 50  0000 C CNN
+	1    3800 3700
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR011
+U 1 1 5812E06D
+P 7700 3500
+F 0 "#PWR011" H 7700 3250 50  0001 C CNN
+F 1 "GND" H 7700 3350 50  0000 C CNN
+F 2 "" H 7700 3500 50  0000 C CNN
+F 3 "" H 7700 3500 50  0000 C CNN
+	1    7700 3500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7700 3350 7700 3500
+Wire Wire Line
+	6250 3350 6750 3350
+Wire Wire Line
+	5850 3650 5850 3750
+Wire Wire Line
+	4550 3350 5450 3350
+Connection ~ 4950 3350
+Wire Wire Line
+	3550 3350 4250 3350
+Wire Wire Line
+	3800 3450 3800 3700
+Wire Wire Line
+	5450 4650 5300 4650
+Wire Wire Line
+	4950 3350 4950 3500
+Wire Wire Line
+	4950 3800 4950 3950
+$Comp
+L VCC #PWR012
+U 1 1 5812E2B8
+P 6550 3100
+F 0 "#PWR012" H 6550 2950 50  0001 C CNN
+F 1 "VCC" H 6550 3250 50  0000 C CNN
+F 2 "" H 6550 3100 50  0000 C CNN
+F 3 "" H 6550 3100 50  0000 C CNN
+	1    6550 3100
+	1    0    0    -1  
+$EndComp
+$Comp
+L VDD #PWR013
+U 1 1 5812E2DA
+P 6550 4450
+F 0 "#PWR013" H 6550 4300 50  0001 C CNN
+F 1 "VDD" H 6550 4600 50  0000 C CNN
+F 2 "" H 6550 4450 50  0000 C CNN
+F 3 "" H 6550 4450 50  0000 C CNN
+	1    6550 4450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6250 4650 6550 4650
+Wire Wire Line
+	6550 3100 6550 4150
+Connection ~ 6550 3350
+Wire Wire Line
+	7050 3350 7300 3350
+Wire Wire Line
+	5850 4950 5850 5100
+$Comp
+L CONN_01X02 P2
+U 1 1 5817FCC8
+P 3350 3400
+F 0 "P2" H 3350 3550 50  0000 C CNN
+F 1 "PWR" V 3450 3400 50  0000 C CNN
+F 2 "Pin_Headers:Pin_Header_Angled_1x02" H 3350 3400 50  0001 C CNN
+F 3 "" H 3350 3400 50  0000 C CNN
+	1    3350 3400
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	3800 3450 3550 3450
+$Comp
+L SPX2920U-3.3 U6
+U 1 1 58180227
+P 5850 4700
+F 0 "U6" H 5850 4950 50  0000 C CNN
+F 1 "SPX2920U-3.3" H 5850 4900 50  0000 C CNN
+F 2 "TO_SOT_Packages_THT:TO-220_Neutral123_Vertical" H 5850 4800 50  0001 C CIN
+F 3 "" H 5850 4700 50  0000 C CNN
+	1    5850 4700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6550 4650 6550 4450
+Wire Wire Line
+	5300 4650 5300 4150
+Wire Wire Line
+	5300 4150 6550 4150
+$EndSCHEMATC
