@@ -3,6 +3,13 @@ cat644
 
 Cat-644 is a microcomputer based around the Atmega644 microcontroller.  This repository will hold both hardware designs and software source code.
 
+dirs:
+
+schematics/  	hardware information
+cat1/  			OLD hardware test routines.  Will be deleted when CAT-OS is finished
+cat-os/			'scratchpad' OS.  Being built out of code in the cat1 directory
+
+
 LICENSE
 
 All code is under GPL v2.  See LICENSE file for details.
