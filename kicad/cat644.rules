@@ -11,7 +11,7 @@
     (via_costs 50)
     (plane_via_costs 5)
     (start_ripup_costs 100)
-    (start_pass_no 5762)
+    (start_pass_no 8077)
     (layer_rule F.Cu
       (active on)
       (preferred_direction horizontal)
@@ -26,56 +26,56 @@
     )
   )
   (rule
-    (width 304.8)
+    (width 381.0)
     (clear 254.2)
-    (clear 152.4 (type smd_to_turn_gap))
+    (clear 190.5 (type smd_to_turn_gap))
     (clear 63.6 (type smd_smd))
   )
-  (padstack "Via[0-1]_1066.8:812.8_um"
+  (padstack "Via[0-1]_1270:685.8_um"
     (shape
-      (circle F.Cu 1066.8 0.0 0.0)
+      (circle F.Cu 1270.0 0.0 0.0)
     )
     (shape
-      (circle B.Cu 1066.8 0.0 0.0)
+      (circle B.Cu 1270.0 0.0 0.0)
     )
     (attach off)
   )
   (via 
-    "Via[0-1]_1066.8:812.8_um" "Via[0-1]_1066.8:812.8_um" default
+    "Via[0-1]_1270:685.8_um" "Via[0-1]_1270:685.8_um" default
   )
   (via 
-    "Via[0-1]_1066.8:812.8_um-kicad_default" "Via[0-1]_1066.8:812.8_um" "kicad_default"
+    "Via[0-1]_1270:685.8_um-kicad_default" "Via[0-1]_1270:685.8_um" "kicad_default"
   )
   (via_rule
-    default "Via[0-1]_1066.8:812.8_um"
+    default "Via[0-1]_1270:685.8_um"
   )
   (via_rule
-    "kicad_default" "Via[0-1]_1066.8:812.8_um-kicad_default"
+    "kicad_default" "Via[0-1]_1270:685.8_um-kicad_default"
   )
   (class default
     (clearance_class default)
     (via_rule default)
     (rule
-      (width 304.8)
+      (width 381.0)
     )
     (circuit 
       (use_layer F.Cu B.Cu)
     )
   )
   (class "kicad_default"
-    "Net-(C1-Pad1)" GND "Net-(C2-Pad1)" "Net-(C2-Pad2)" "Net-(C3-Pad1)" "Net-(C3-Pad2)" "Net-(C4-Pad1)" "Net-(C5-Pad2)"
-    /av/VSYNC VDD "Net-(D2-Pad2)" "Net-(D3-Pad1)" "Net-(D4-Pad1)" "/serial/SD_ENABLE" /serial/MOSI /serial/MISO
-    /serial/SCLK "/serial/PS2_DK" VCC "/serial/PS2_DATA" "/av/VGA_BLUE" "/av/VGA_GREEN" "/av/VGA_RED" /av/HSYNC
-    "Net-(R2-Pad2)" "Net-(R3-Pad2)" "Net-(R4-Pad2)" "Net-(R5-Pad2)" "Net-(R6-Pad2)" "Net-(R7-Pad2)" "/av/AUDIO_OUT" "Net-(U1-Pad1)"
-    "Net-(U1-Pad2)" "Net-(U1-Pad3)" "Net-(U1-Pad4)" "Net-(U1-Pad5)" "Net-(U1-Pad13)" "/serial/RX1_OUT" "/serial/TX1_IN" "Net-(U1-Pad16)"
-    "Net-(U1-Pad17)" "Net-(U1-Pad20)" "Net-(U1-Pad22)" "Net-(U1-Pad23)" "Net-(U1-Pad24)" "Net-(U1-Pad25)" "Net-(U1-Pad26)" "Net-(U1-Pad27)"
-    "Net-(U1-Pad28)" "Net-(U1-Pad29)" "Net-(U1-Pad35)" "Net-(U1-Pad36)" "Net-(U2-Pad12)" "Net-(U2-Pad13)" "Net-(U2-Pad14)" "Net-(U2-Pad15)"
-    "Net-(U2-Pad16)" "Net-(U2-Pad17)" "Net-(U2-Pad18)" "Net-(U2-Pad19)" "Net-(D1-Pad2)" "Net-(D3-Pad2)" "Net-(D4-Pad2)" "Net-(D5-Pad2)"
-    "Net-(P4-Pad2)" "Net-(P4-Pad3)" "Net-(P5-Pad6)" /serial/RESET
+    GND /av/VSYNC VDD "Net-(D2-Pad2)" "Net-(D3-Pad1)" "Net-(D4-Pad1)" "/serial/SD_ENABLE" /serial/MOSI
+    /serial/MISO /serial/SCLK "/serial/PS2_DK" VCC "/serial/PS2_DATA" "/av/VGA_BLUE" "/av/VGA_GREEN" "/av/VGA_RED"
+    /av/HSYNC "Net-(R2-Pad2)" "Net-(R3-Pad2)" "Net-(R4-Pad2)" "Net-(R5-Pad2)" "Net-(R6-Pad2)" "Net-(R7-Pad2)" "/av/AUDIO_OUT"
+    "Net-(U1-Pad1)" "Net-(U1-Pad2)" "Net-(U1-Pad3)" "Net-(U1-Pad4)" "Net-(U1-Pad5)" "Net-(U1-Pad13)" "/serial/RX1_OUT" "/serial/TX1_IN"
+    "Net-(U1-Pad16)" "Net-(U1-Pad17)" "Net-(U1-Pad20)" "Net-(U1-Pad22)" "Net-(U1-Pad23)" "Net-(U1-Pad24)" "Net-(U1-Pad25)" "Net-(U1-Pad26)"
+    "Net-(U1-Pad27)" "Net-(U1-Pad28)" "Net-(U1-Pad29)" "Net-(U1-Pad35)" "Net-(U1-Pad36)" "Net-(U2-Pad12)" "Net-(U2-Pad13)" "Net-(U2-Pad14)"
+    "Net-(U2-Pad15)" "Net-(U2-Pad16)" "Net-(U2-Pad17)" "Net-(U2-Pad18)" "Net-(U2-Pad19)" "Net-(D1-Pad2)" "Net-(D3-Pad2)" "Net-(D4-Pad2)"
+    "Net-(D5-Pad2)" /serial/RESET "Net-(C5-Pad1)" "Net-(C9-Pad2)" "Net-(C9-Pad1)" "Net-(C11-Pad1)" "Net-(C11-Pad2)" "Net-(C12-Pad1)"
+    "Net-(C13-Pad2)" "Net-(P3-Pad2)" "Net-(P3-Pad3)" "Net-(P4-Pad6)"
     (clearance_class "kicad_default")
     (via_rule kicad_default)
     (rule
-      (width 304.8)
+      (width 381.0)
     )
     (circuit 
       (use_layer F.Cu B.Cu)
