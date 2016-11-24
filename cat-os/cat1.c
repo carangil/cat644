@@ -20,8 +20,8 @@
 
 #include "vga.h"
 
-//#include "spi.h"
-//#include "sdcard.h"
+#include "spi.h"
+#include "sdcard.h"
 //#include "filesystem.h"
 //#include "w5100.h"
 
@@ -29,7 +29,7 @@
 
 #define CONFIG_SDCARD_BLOCKS  
 
-
+extern void TIMER1_COMPA_vect();
 
 /* Character devices */
 chardevice_t  dev_comm = { comm_ioctl, 0,comm_putc, comm_getc, comm_kbhit};
@@ -45,10 +45,56 @@ chardevice_t* dmesg = NULL;  /* OS debug messages will be output here, if this i
 
 unsigned char buf[512];
 unsigned char buf2[512];
+void debug(char* x)
+{
+	
+		prints(&dev_comm, x);
+		prints(&dev_comm, "\r\n");
+	
+	
+}
+
+int screen_x = 0;
+int screen_y = 0;
+
+char color=1;
+char color2=0;
+int screen_write(char* string) {
+
+
+	while(*string)
+	{
+		
+		if (*string == '\n') {
+			screen_x=0;
+			screen_y++;
+			string++;
+			continue;
+		}
+		
+		drawchar(screen_x*8, screen_y*8, *string,color, color2);
+		screen_x ++;
+		
+		if (screen_x > 16)
+		{
+			screen_y++;
+			screen_x=0;
+		}
+		
+		screen_y = screen_y & 31;
+		
+		
+		
+		
+		string++;
+	}
+	
+}
 
 void init(){
-
-		int c=1;
+	long cardcap=0;
+	
+	int c=0;
 	comm_ioctl_parms_t* commparm = (void*)scratch;
 	
 	/* Disable JTAG port to get full access on PORTC*/
@@ -72,14 +118,36 @@ void init(){
 	vga_init();
 	sei(); //enable interrupts
 	vga_fast();
-	clearscreen(c++);
+
+#if 0
+	spi_init(SPI_MASTER | SPI_CLK_128);
+	sdcard_init(0, &cardcap);
+
+	snprintf(scratch, SCRATCH_SIZE, "card capacity:%lx\n", cardcap);
+	prints(&dev_comm,  scratch );	
+#endif			
+	
+	
+
 	while(1) {
+		c++;
+		
+		
+		
 		unsigned int addr=123;
 		unsigned int count=10;
 	
+	
 		int i;
+        clearscreen(c);
+		for (color=0;color <64;color++){	
+			screen_write("X");
+		}
 		
-	//	clearscreen(c++);
+		
+		
+		prints(&dev_comm,  scratch );
+		readline(&dev_comm, scratch, sizeof(scratch), 1);
 
 			
 		DMESG("start:");
@@ -122,7 +190,7 @@ void init(){
 			prints(&dev_comm,  scratch );
 			
 		}
-		c++;
+	
 		
 	
 	}

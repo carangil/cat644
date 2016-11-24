@@ -8,7 +8,7 @@
 #include "avrstuff.h"
 #include "spi.h"
 #include "sdcard.h"
-#include "comm.h"
+
 
 char str[30];
 
