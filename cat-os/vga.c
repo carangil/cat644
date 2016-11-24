@@ -143,9 +143,9 @@ ISR (TIMER1_COMPA_vect)
 	lctrl = RAMCTRL_PORT;
 	
 	//hsync up
-	TCCR1A = _BV(COM1A0)|_BV(COM1A1); //set on compare match
-	TCCR1C = _BV(FOC1A); //force match (so its set high)
-	TCCR1A = _BV(COM1A1);   //clear on our next match
+	TCCR1A = _BV(COM1B0)|_BV(COM1B1); //set on compare match
+	TCCR1C = _BV(FOC1B); //force match (so its set high)
+	TCCR1A = _BV(COM1B1);   //clear on our next match
 	//here about 70 clocks
 	
 	i = lscroll;
@@ -371,8 +371,9 @@ void vga_init()
 	VGA_DAC_DDR |= VGA_DAC_MASK; //enable  1 output
 	VGA_DAC_PORT |= VGA_DAC_MASK; //turn that bit on
 	
-	
-	TCCR1A = (1<<COM1A1);  //clear OC1A, on match, which is hsync
+	//use channel B to drive hync low
+	TCCR1A = (1<<COM1B1);  //clear OC1A, on match, which is hsync
+	OCR1B = 620;  //hsync goes low, even before the interrupt
 	
 	/* Try OC0 */
 	
