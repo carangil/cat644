@@ -23,6 +23,12 @@
 #define VGA_DAC_DDR		DDRA
 #define VGA_DAC_MASK    0b00010000  /*a.4*/
 
+
+#define VGA_HSYNC_HIGH			76
+#define VGA_HSYNC_LOW		(636-20)
+
+
+
 #define VGA_DISPLAY(n) if(n) vga_a16 = RAMEX_A16_HIGH_MASK; else vga_a16 =0;
 
 void vga_init();

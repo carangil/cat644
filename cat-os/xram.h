@@ -9,7 +9,9 @@
 #ifndef XRAM_H_
 #define XRAM_H_
 
+#ifndef __ASSEMBLER__
 #include "avrstuff.h"
+#endif
 
 #define XRAM_128K
 
@@ -134,6 +136,8 @@ RAMCTRL_PORT &= ~RAMCTRL_OE_MASK  ; \
 	#define SELECT_RAM_BANK(n) (n ?  (SETA16HIGH) : (SETA16LOW) )
 #endif
 
+#ifndef __ASSEMBLER__
+
 void memcpyx2i( char* internal, unsigned int addr,  unsigned int cnt) ;
 
 void memcpyi2x(unsigned int addr, char* internal, unsigned int cnt);
@@ -142,5 +146,8 @@ extern volatile unsigned char lastpage;
 void xram_init();
 
 void xram_test();
+
+
+#endif
 
 #endif /* XRAM_H_ */

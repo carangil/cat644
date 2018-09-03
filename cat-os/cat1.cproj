@@ -110,6 +110,9 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Assembly1.s">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="avrstuff.h">
       <SubType>compile</SubType>
     </Compile>
@@ -140,10 +143,25 @@
     <Compile Include="misc.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="sdcard.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sdcard.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="spi.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="spi.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="vga.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="vga.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="vgaports.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="xram.c">

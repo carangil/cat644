@@ -126,7 +126,11 @@ ISR (TIMER1_COMPA_vect)
 	#endif
 	
 	//front porch is just function startup code
+	//hsync up in the future (soon)
+	TCCR1A = _BV(COM1B0)|_BV(COM1B1); //set on compare match
+	OCR1B = VGA_HSYNC_HIGH; 
 	
+	//TCCR1C = _BV(FOC1B); //force match (so its set high)
 	//go directly into sync
 	
 	//vsync is happening after sync pulse
@@ -142,11 +146,14 @@ ISR (TIMER1_COMPA_vect)
 		//lctrl = RAMCTRL_PORT & (~RAMCTRL_MASK);  //grab our control bits
 	lctrl = RAMCTRL_PORT;
 	
-	//hsync up
-	TCCR1A = _BV(COM1B0)|_BV(COM1B1); //set on compare match
-	TCCR1C = _BV(FOC1B); //force match (so its set high)
-	TCCR1A = _BV(COM1B1);   //clear on our next match
-	//here about 70 clocks
+
+	
+	
+	//set back up for next hsync low cycle
+	TCCR1A = (1<<COM1B1);  //clear OC1A, on match, which is hsync
+	OCR1B = VGA_HSYNC_LOW;  //hsync goes low, even before the interrupt
+	
+	
 	
 	i = lscroll;
 		
@@ -373,12 +380,15 @@ void vga_init()
 	
 	//use channel B to drive hync low
 	TCCR1A = (1<<COM1B1);  //clear OC1A, on match, which is hsync
-	OCR1B = 620;  //hsync goes low, even before the interrupt
+	OCR1B = VGA_HSYNC_LOW;  //hsync goes low, even before the interrupt
+	
+	
 	
 	/* Try OC0 */
-	
-	TCCR0B = (1<<CS00); //unscaled clock
-	OCR0A = 0;//compare to zero
+	//
+	//0c0 only for 512px mode
+//	TCCR0B = (1<<CS00); //unscaled clock
+//	OCR0A = 0;//compare to zero
 	
 	/*
 		
