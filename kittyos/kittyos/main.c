@@ -88,7 +88,7 @@ int main(void)
 	   
 	   // if we initalized serial port, that becomes the output console
 	   dev_dmesg = &dev_ser0;
-	   DMESGF("SER0 at %d", CONFIG_SER0_BAUD);
+	   DMESGF("SER0 at %d\n", CONFIG_SER0_BAUD);
    }
    
 
@@ -97,7 +97,7 @@ int main(void)
    	env.cmdline= " testing";
    	env.in = &dev_ser0;
    	env.out = &dev_ser0;
-	   
+	DMESG("Start user program\n");
     DMESGF("Prog returned %d\nHLT\n", test_main(&env));
          
    while(1){}
