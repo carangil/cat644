@@ -9,6 +9,7 @@
 #ifndef KITTYOS_H_
 #define KITTYOS_H_
 #include "drivers.h"
+#include "xram.h"
 
 typedef struct environment_s {
 	chardevice_t* in;

@@ -78,19 +78,24 @@ int main(void)
    	MCUCR |= _BV(JTD);
    	DDRA=0;    //all input
    	PORTA=0xff;   //pullup
-   
-  
+
+ 
    //initialize serial port
   
    DMESG("Kernel start\n");  //testing that unitialized console does nothing bad
+  
+  PORTC=123;
+  DDRC=0xfe;
   
    if (SUCCESS == dev_ser0.dev.ioctl(&dev_ser0.dev, IOCTL_BAUD, CONFIG_SER0_BAUD)) {
 	   
 	   // if we initalized serial port, that becomes the output console
 	   dev_dmesg = &dev_ser0;
-	   DMESGF("SER0 at %d\n", CONFIG_SER0_BAUD);
+	   DMESGF("SER0 at %d C=ff!\n", CONFIG_SER0_BAUD);
    }
-   
+     //try outputing on a port
+
+	xram_init();
 
 
    	environment_t env;  	
