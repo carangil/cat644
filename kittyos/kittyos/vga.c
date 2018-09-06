@@ -110,7 +110,7 @@ unsigned char dispeven=1;  //display odd rows
 
 volatile unsigned char framecount=0;
 
-void badvid()// ISR (TIMER1_COMPA_vect)
+ void badvid() //ISR (TIMER1_COMPA_vect)
 {
 	unsigned char i;
 	unsigned char laddr;
@@ -267,10 +267,10 @@ void badvid()// ISR (TIMER1_COMPA_vect)
 			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
 			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
 			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
+			//SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
 			
 			//32 px
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
+		//	SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
 			//SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
 			//	SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
 			//		SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
@@ -358,14 +358,13 @@ void badvid()// ISR (TIMER1_COMPA_vect)
 
 
 
-extern void* videoint;
-extern video256();
+
 void vga_init()
 {
-	int i;
-	unsigned char j;
+
+
 	
-	videoint = video256;
+
 	
 	TIMSK1=_BV(OCIE1A);
 	
@@ -375,13 +374,30 @@ void vga_init()
 	OCR1A = 636;  //Every 636 cycles do video interrupt
 	
 	VGA_DDR |= VGA_DDR_MASK;   //enable vga outputs
-	VGA_PORT = (VGA_PORT & VGA_MASK) | VGA_HSYNC_MASK | VGA_VSYNC_MASK ;
+	VGA_PORT = (VGA_PORT & VGA_MASK) | VGA_HSYNC_MASK | VGA_VSYNC_MASK ;  //HSYNC and VSYNC are kept high
 	
 	VGA_DAC_DDR |= VGA_DAC_MASK; //enable  1 output
 	VGA_DAC_PORT |= VGA_DAC_MASK; //turn that bit on
 	
-	//use channel B to drive hync low
-	TCCR1A = (1<<COM1B1);  //clear OC1A, on match, which is hsync
+	
+
+	//1B is PD4       (hsync)
+	//1A  is PD5	(vsync)
+	
+	TCCR1A =  (1<<COM1A1) | (1<<COM1A0)    //set channel A high on timer1 match (OCR1A)
+			| (1<<COM1B1) | (1<<COM1B0) ;   //set channel A high on timer1 match (OCR1B)  
+	
+	asm volatile ("nop");
+	asm volatile ("nop");
+	asm volatile ("nop");
+	
+	
+	TCCR1C = (1<<FOC1A) | (1<<FOC1B)  ;// do timer match now 
+	
+		asm volatile ("nop");
+	asm volatile ("nop");
+	//use channel B to drive hync low when timer goes off
+	TCCR1A = (1<<COM1B1);  //clear OC1B, on match, which is hsync  // also , since COM1Ax are not set anymore, this pin goes to 'normal' which is set to high
 	OCR1B = VGA_HSYNC_LOW;  //hsync goes low, even before the interrupt
 	
 	

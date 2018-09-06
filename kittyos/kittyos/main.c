@@ -7,6 +7,7 @@
 
 #include "kittyos.h"
 #include "comm.h"
+#include "vga.h"
 
 
 //way to output messages to console
@@ -97,7 +98,34 @@ int main(void)
 
 	xram_init();
 
-
+	vga_init();
+	sei();
+	
+	   while(1){
+		  	asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+		   
+	   }
+	
+	
    	environment_t env;  	
    	env.cmdline= " testing";
    	env.in = &dev_ser0;

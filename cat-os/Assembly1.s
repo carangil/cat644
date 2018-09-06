@@ -22,19 +22,48 @@
 #define portd	_SFR_IO_ADDR(PORTD)
 #define ddrc	_SFR_IO_ADDR(DDRC)
 
+/*Define register pair 'halfs' */
+//X is caller-saved in AVR
+#define XL r26
+#define XH r27
 
-.global xTIMER1_COMPA_vect
-xTIMER1_COMPA_vect:
-jmp video256
+//Y is callee-saved
+#define YL r28
+#define YH r29
+
+//Z is caller-saved
+//#define ZL r30
+#define ZH r31
 
 
 
+.data
+
+.global videoint
+videoint:
+.byte 0x12
+.byte 0x34
+
+
+.text
+.global TIMER1_COMPA_vect
+TIMER1_COMPA_vect:
+jmp videosel
+
+//this one selects the video interrupt
+videosel:
+	push ZL
+	push ZH
+	lds  zl, videoint
+	lds ZH , videoint+1
+	ijmp
+	
 
 
 /* This routine starts with the hsync pulse low, because it is a timer oscillator output
 */
 
-
+.global video256
 video256:
 	push r16
 	push R1

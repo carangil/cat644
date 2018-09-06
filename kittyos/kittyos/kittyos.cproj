@@ -143,6 +143,12 @@
     <Compile Include="drivers.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="font.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="intvga.s">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="kittyos.h">
       <SubType>compile</SubType>
     </Compile>
@@ -150,6 +156,15 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="test.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="vga.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="vga.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="vgadefs.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="xram.c">
