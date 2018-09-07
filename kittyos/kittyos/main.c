@@ -98,6 +98,7 @@ int main(void)
 
 	xram_init();
 
+    
 	vga_init();
 	sei();
 	 //..SELECT_RAM_PAGE(0x123);
@@ -163,10 +164,11 @@ int main(void)
          
 		 
 		
-		 
+   vga_slow();
+   
    while(1){
 	   
-	//   vscroll++;
+	   vscroll++;
 	   hscroll-=2;
 	   vga_delay(20);
 	   

@@ -99,7 +99,42 @@ PX32
 
 
 
+setvsyncdown:
+//set for vsync to go down when timer hits
+ldi zl, HSYNCTIMERTOGGLE | VSYNCTIMERLOW
+sts TCCR1A, zl
 
+lds zh, framecount
+lds zl, evenodd
+sbrs zl, 0			//if zl is odd we skip the next instruction            (if zl is even we add one)
+subi zh, -1			//subtract negative 1 ( add 1)
+sts  framecount,zh
+
+
+jmp videxit
+
+
+.global vidskippy
+vidskippy:
+//this version skips every other line
+	lds zh, evenodd
+	
+	subi zh, -128 //flip top bit of this word
+	breq skipline  //if we flpped back to even we need to increment row counter.  good place to bail
+	
+	sts evenodd, zh  //store new even/odd value
+
+	lds zl, drawrow
+	lds zh, vcnt
+	cp zl, zh
+	jmp prebrshblanklines
+
+
+
+blankskip:
+
+nop
+nop
 
 blanklines:
 
@@ -107,7 +142,7 @@ nop
 nop
 
 ldi zh, 1<<FOC1B
-sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 54
+sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
 
 
 lds zl, drawrow
@@ -117,20 +152,6 @@ breq setvsyncdown
 //otherwuse just have it come up 
 ldi zl, HSYNCTIMERTOGGLE | VSYNCTIMERHIGH
 sts TCCR1A, zl
-
-
-rjmp videxit
-
-setvsyncdown:
-//set for vsync to go down when timer hits
-ldi zl, HSYNCTIMERTOGGLE | VSYNCTIMERLOW
-sts TCCR1A, zl
-
-lds zh, framecount
-lds zl, evenodd
-sbrc zl, 0
-subi zh, -1
-sts  framecount,zh
 
 
 rjmp videxit
@@ -183,33 +204,48 @@ ijmp
 	*/
 	//we are active video line
 
-.global vidactive
-vidactive:  //starts at 34
+
+	skipline:
+
+	sts evenodd, zh  //store new even/odd value
+
+	lds zl, drawrow
+	inc zl
+	sts drawrow, zl
+
+	nop
+	jmp blanklines
+
+
+
+	
+.global vidfull
+vidfull:  //starts at 34
 
 	//toggle hsync
 
 
 
-	//load row
 	lds zh, evenodd
 	lds zl, drawrow
-	inc zh
-	andi zh, 1
-	brne odd
+	subi zh, -128 //flip top bit of this word
+	sbrc zh,7
 	inc zl
-	odd:
-	sts drawrow, zl 
+	sts drawrow, zl
 	sts evenodd, zh
 	lds zh, vcnt
 	cp zl, zh
-	brsh blanklines
+	
+	prebrshblanklines:
+	brsh blanklines  //clock 48
+
+	
 
 	lds zh, vscroll
 	add zl, zh
-
-
+	
 	ldi zh, 1<<FOC1B
-	sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 54
+	sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
 	
 	
 

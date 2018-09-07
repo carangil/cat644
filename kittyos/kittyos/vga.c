@@ -63,15 +63,16 @@
 
 //goes to video interrupt
 void * vidptr;
-extern void vidactive();
+extern void vidfull();
+extern void vidskippy();
 
-
-volatile unsigned char dispeven=0;
+volatile unsigned char skiplines=0;
 void vga_init()
 {
 
 
-	vidptr = vidactive;
+
+	vidptr = vidskippy;
 
 	
 	//TIMSK1=_BV(OCIE1A);
@@ -121,12 +122,12 @@ void vga_init()
 /* controls whether to display odd scanlines  */
 void vga_fast()
 {
-	dispeven = 0;
+	vidptr = vidskippy;
 }
 
 void vga_slow()
 {
-	dispeven = 1;	
+	vidptr = vidfull;
 }
 
 
