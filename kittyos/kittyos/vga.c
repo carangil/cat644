@@ -58,320 +58,35 @@
 
 #endif
 
-//copied from arduino tv-out
-static inline void wait_until(unsigned char time) {
-	
-	__asm__ __volatile__ (
-	"sub	%[time], %[tcnt1l]\n\t"
-	"subi	%[time], 10\n"
-	"100:\n\t"
-	"subi	%[time], 3\n\t"
-	"brcc	100b\n\t"
-	"subi	%[time], 0-3\n\t"
-	"breq	101f\n\t"
-	"dec	%[time]\n\t"
-	"breq	102f\n\t"
-	"rjmp	102f\n"
-	"101:\n\t"
-	"nop\n"
-	"102:\n"
-	:
-	: [time] "a" (time),
-	[tcnt1l] "a" (TCNT1L)
-	);
-}
-
 
  unsigned char hires=0;
 
-#define PX1(cnt)  __asm__ __volatile__ (\
-"subi %[j], -1 \n" \
-"out 0x5, %[j] \n" \
-: : [j] "a" (cnt));
-
-#define PX9(cnt)  __asm__ __volatile__ (\
-"subi %[j], -9\n" \
-"out 0x5, %[j] \n" \
-: : [j] "a" (cnt));
+//goes to video interrupt
+void * vidptr;
+extern void vidactive();
 
 
-
-unsigned char active_video=1;  //set to zero to blank screen to steal cpu (but keep vsync)
-unsigned char lscroll=0;   //current left-right scroll 
-unsigned char oldclock=1;  //last state of ps2 clock
-unsigned char vsyncstate=0;  //what the next lines vsyncstate will be
-unsigned char vga_a16=0;  //which bank to display onto the screen
-unsigned int rowcnt=0;  //current row (0 to 240 are active 
-//unsigned char activecount=0;
-//unsigned char blankcount=0;
-
-unsigned char dispeven=1;  //display odd rows
-
-
-volatile unsigned char framecount=0;
-
- void badvid() //ISR (TIMER1_COMPA_vect)
-{
-	unsigned char i;
-	unsigned char laddr;
-	unsigned char lddr;
-	unsigned char ldata;
-	unsigned char lctrl;
-		
-	asm volatile ("revideo:");
-	wait_until(62);
-	
-	#ifdef VGA_KEY_INTERRUPT
-	kp = KEY_PIN;  //capture ps/2 port at regular interval
-	#endif
-	
-	//front porch is just function startup code
-	//hsync up in the future (soon)
-	TCCR1A = _BV(COM1B0)|_BV(COM1B1); //set on compare match
-	OCR1B = VGA_HSYNC_HIGH; 
-	
-	//TCCR1C = _BV(FOC1B); //force match (so its set high)
-	//go directly into sync
-	
-	//vsync is happening after sync pulse
-	VGA_PORT = (VGA_PORT & (~VGA_VSYNC_MASK)) | vsyncstate; //maybe maybe vsync low
-	
-	
-	//BACK PORCH  burn 32 clocks.  add nops until bpend = syncend =32
-	
-	
-	laddr = RAMADDR_PORT;
-	lddr =  RAMDATA_DDR;
-	ldata = RAMDATA_PORT;
-		//lctrl = RAMCTRL_PORT & (~RAMCTRL_MASK);  //grab our control bits
-	lctrl = RAMCTRL_PORT;
-	
-
-	
-	
-	//set back up for next hsync low cycle
-	TCCR1A = (1<<COM1B1);  //clear OC1A, on match, which is hsync
-	OCR1B = VGA_HSYNC_LOW;  //hsync goes low, even before the interrupt
-	
-	
-	
-	i = lscroll;
-		
-	if (  ( dispeven| (rowcnt&1)  )  &&(rowcnt < 480)        &&active_video)
-	{
-	
-		RAMCTRL_PORT |= RAMCTRL_WE_MASK; //no writing
-		RAMCTRL_PORT |= RAMCTRL_OE_MASK; //no reading
-		
-		//settle ram control signals
-		asm volatile("nop\n nop\n ");
-		
-		RAMDATA_DDR = 0x00;  //input
-		RAMDATA_PORT = 0x00;  //floating (no pullup)
-		
-		RAMCTRL_PORT = RAMCTRL_PORT &(~RAMCTRL_OE_MASK);  //ok to read
-
-		SELECT_RAM_PAGE_NOSAVE_MACRO(rowcnt>>1);
-		
-		//pixel 0
-		if (hires){
-			char la16=PORTA;
-			
-			SELECT_RAM_BANK(0);
-			
-			//clear portb.3 operation
-			TCCR0A = (1<<COM0A1)|(1<<WGM01); //clear on force
-			//TCCR0A = (1<<COM0A1)|(1<<COM0A0)|(1<<WGM01); //set on force
-			TCCR0B |= (1<<FOC0A);  //force
-			
-			//set up for toggle of portb.3 every clock
-			TCCR0A = (1<<COM0A0)|(1<<WGM01); //toggle OC0A on match,ctc
-			TCNT0=0xff; //roll to zero
-						
-			SETADDRESSLOW(i);
-			VGA_DAC_PORT &= (~VGA_DAC_MASK);  //low the dac mask to enable dac
-			
-			//64px
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			
-			//64px
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			
-			//64px
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			
-			//64px
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);
-			SELECT_RAM_BANK(1);PX9(i);
-			
-			//64px
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			
-			//64px
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX1(i);PX9(i);
-			
-			PORTA=la16;
-		} else
-		{
-			char la16 = PORTA;
-			PORTA = (la16 & RAMEX_A16_LOW_MASK) | vga_a16;
-			
-			//lowres
-			SETADDRESSLOW(i);
-			VGA_DAC_PORT &= (~VGA_DAC_MASK);  //low the dac mask to enable dac
-			
-			//64px
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			
-			
-			//64px
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			
-			//64px
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			//SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			
-			//32 px
-		//	SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			//SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			//	SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			//		SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);SETADDRESSLOW(++i);
-			
-			PORTA=la16;
-		}
-		//new
-		TCCR0A=0; //portb timer off
-		
-		RAMCTRL_PORT |= RAMCTRL_OE_MASK; //disable read
-		RAMDATA_DDR = 0xff;  //all output
-		RAMDATA_PORT=0;//zero
-		
-		//end new
-		
-		VGA_DAC_PORT |= VGA_DAC_MASK;  //high the dac mask to disable dac
-		
-		//put things back how they were
-		
-	
-		SELECT_RAM_PAGE_NOSAVE_MACRO(lastpage); // do this while burning time
-		
-		
-		RAMADDR_PORT = laddr;
-						
-		RAMCTRL_PORT |= RAMCTRL_OE_MASK; //disable read
-		
-		//put old data back on (if we were doing that)
-		RAMDATA_DDR = lddr;  
-		RAMDATA_PORT = ldata;
-		
-		//go back to doing whatever
-		//RAMCTRL_PORT = (RAMCTRL_PORT & RAMCTRL_MASK) | lctrl;
-		asm volatile("nop\n nop\n"); //settle address before possible going back to writing
-		RAMCTRL_PORT = lctrl;  //this also messes with some vga bits, but whatever
-		
-		
-		//rowcnt+=oddeven;
-		//oddeven^=1;			
-		//activecount++;
-		rowcnt++;
-	}
-	else /*inactive video line */
-	{
-		rowcnt++;
-		
-		if (rowcnt==490 ) 
-			vsyncstate = 0;  //vsync low
-		else if (rowcnt==492)
-			vsyncstate = VGA_VSYNC_MASK;
-		
-		//reset
-		if (rowcnt==525) {
-			rowcnt=0;		
-			framecount++;	
-		}
-		
-	}
-		
-	#ifdef VGA_KEY_INTERRUPT
-	//look at keyboard before we go back
-	
-	i = kp & KEY_CLK;
-	
-	if ((!i) && (i != oldclock))
-	{
-		oldclock=i;
-		//		TIMSK1=0; //disable tcnt interrupt
-		
-		keypoll(kp);  //mess with keyboard
-				
-		while (TCNT1>50);//wait for counter to roll over
-		TIFR1 |= (1 << OCF1A); //clear flag  (setting will clear it)
-		asm volatile ("rjmp revideo");
-		
-		//goto revid;  //will wait until the top of the next video interrupt
-	}
-	
-	TIMSK1 |=_BV(OCIE1A);  //enable tcnt1 interrupt
-	
-	oldclock=i;
-	#endif
-	
-}
-
-
-
-
+volatile unsigned char dispeven=0;
 void vga_init()
 {
 
 
-	
+	vidptr = vidactive;
 
 	
-	TIMSK1=_BV(OCIE1A);
-	
-	TCCR1B = (1<<CS10)  | (1<<WGM12 );
+	//TIMSK1=_BV(OCIE1A);
+	//TIMSK1=_BV(TOIE1);  //get on overflow
+	TIMSK1=_BV(ICIE1);  //get on match to ICR
+	//TCCR1B = (1<<CS10)  | (1<<WGM12 );
 	TCNT1 = 0x00; //zero timer count
 	
-	OCR1A = 636;  //Every 636 cycles do video interrupt
+	
+	TCCR1B = (1<<CS10)  | (1<<WGM13 ) | (1<<WGM12 ); //unscaled clock, CTC with ICR as top 
+		ICR1 = 636; //overflow every 636
+		OCR1B = 636-76+40;  //trip vsync here
+		//OCR1B = 636;  //trip hsync here
+		
+//	OCR1A = 636;  //Every 636 cycles do video interrupt
 	
 	VGA_DDR |= VGA_DDR_MASK;   //enable vga outputs
 	VGA_PORT = (VGA_PORT & VGA_MASK) | VGA_HSYNC_MASK | VGA_VSYNC_MASK ;  //HSYNC and VSYNC are kept high
@@ -387,36 +102,19 @@ void vga_init()
 	TCCR1A =  (1<<COM1A1) | (1<<COM1A0)    //set channel A high on timer1 match (OCR1A)
 			| (1<<COM1B1) | (1<<COM1B0) ;   //set channel A high on timer1 match (OCR1B)  
 	
-	asm volatile ("nop");
-	asm volatile ("nop");
+	TCCR1C = (1<<FOC1A) | (1<<FOC1B)  ;// do timer match now   Both high now.
+	
 	asm volatile ("nop");
 	
-	
-	TCCR1C = (1<<FOC1A) | (1<<FOC1B)  ;// do timer match now 
-	
-		asm volatile ("nop");
-	asm volatile ("nop");
 	//use channel B to drive hync low when timer goes off
-	TCCR1A = (1<<COM1B1);  //clear OC1B, on match, which is hsync  // also , since COM1Ax are not set anymore, this pin goes to 'normal' which is set to high
-	OCR1B = VGA_HSYNC_LOW;  //hsync goes low, even before the interrupt
+	
+	//TCCR1A = (1<<COM1B1);  //clear OC1B, on match, which is hsync  // also , since COM1Ax are not set anymore, this pin goes to 'normal' which is set to high
+	
+	TCCR1A = (1<<COM1B0);  //toggle OC1B on match 
 	
 	
-	
-	/* Try OC0 */
-	//
-	//0c0 only for 512px mode
-//	TCCR0B = (1<<CS00); //unscaled clock
-//	OCR0A = 0;//compare to zero
-	
-	/*
-		
-	for (i=0;i<255;i++) {
-		
-		j =  pgm_read_byte( font+i);	
-		PORTA = j;
-	}
-		*/
-		
+	OCR1B = HSYNCGOESLOW;
+	OCR1A = HSYNCGOESLOW;  //when sync low, do same here
 	
 }
 
@@ -524,24 +222,27 @@ void drawsprite(unsigned char x, unsigned char y, unsigned char* sprite, unsigne
 	END_FAST_WRITE;
 }
 
+//extern volatile unsigned char framecount;
+ volatile unsigned char vscroll = 0;
+volatile unsigned char hscroll = 0;
+ volatile unsigned char vcnt=220;
 
-void vga_delay(int frames)
+//these not to be used outside vga
+unsigned char drawrow=0;  //row to draw
+unsigned char evenodd;
+
+volatile unsigned char framecount;
+
+void vga_delay(unsigned char frames)
 {
 	char start = framecount;
-	char end = frames;
+	char end = start+frames;
 	
-	while (1) {
-		if (frames < 256) {
-			end = frames;
-			while ( (framecount - start) < end);
-			return;		
-		}
-		else
-		{
-			while(start == framecount);	//wait until frames advances past framecount
-			while(start != framecount); //wait until frames is back to where we started
-			frames -= 256;  //remove 256 frames from wait		
-		}
-	}
+	if (frames==0)
+		return;
+	
+	while (framecount != end);
+	
+	
 }
 

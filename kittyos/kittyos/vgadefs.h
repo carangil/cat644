@@ -21,10 +21,21 @@
 #define VGA_DAC_PORT	PORTA
 #define VGA_DAC_DDR		DDRA
 #define VGA_DAC_MASK    0b00010000  /*a.4*/
+#define VGA_DAC_BITNUM	4
 
-
+//old
 #define VGA_HSYNC_HIGH			76
 #define VGA_HSYNC_LOW		(636-20)
+
+
+#define BACKPORCH	36
+#define HSYNC		76
+#define HSYNCGOESHIGH	54
+#define HSYNCGOESLOW	636 - HSYNC + HSYNCGOESHIGH
+
+//0 AKA 636 is when interrupt fires 
+//  HSYNCGOES HIGH is when HSYNC IS DONE, SO   HSYNCGOESHIGH - 76 + 636 is when HSYNC GOES LOW
+
 
 
 

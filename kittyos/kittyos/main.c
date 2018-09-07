@@ -100,7 +100,15 @@ int main(void)
 
 	vga_init();
 	sei();
-	
+	 //..SELECT_RAM_PAGE(0x123);
+	 //SELECT_RAM_BANK(0);
+	 
+	 clearscreen(GREEN);
+	 drawchar(0,0,'x',RED,BLUE);;
+	 drawchar(256-8,200,'y',RED,BLUE);
+	 drawchar(256-16,100,'a',RED,BLUE);
+	 /*
+	 
 	   while(1){
 		  	asm volatile ("nop");
 			  asm volatile ("nop");
@@ -122,9 +130,29 @@ int main(void)
 			  asm volatile ("nop");
 			  asm volatile ("nop");
 			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
+			  asm volatile ("nop");
 		   
 	   }
-	
+	*/
 	
    	environment_t env;  	
    	env.cmdline= " testing";
@@ -133,7 +161,16 @@ int main(void)
 	DMESG("Start user program\n");
     DMESGF("Prog returned %d\nHLT\n", test_main(&env));
          
-   while(1){}
+		 
+		
+		 
+   while(1){
+	   
+	//   vscroll++;
+	   hscroll-=2;
+	   vga_delay(20);
+	   
+   }
    
   
 }

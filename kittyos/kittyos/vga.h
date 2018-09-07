@@ -58,7 +58,9 @@ void drawsprite(unsigned char x, unsigned char y, unsigned char* sprite, unsigne
 
 
 
-void vga_delay(int frames);
+void vga_delay(unsigned char frames);
 
+extern volatile unsigned char vscroll;
+extern volatile unsigned char hscroll;
 
 #endif /* VGA_H_ */

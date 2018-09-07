@@ -22,8 +22,15 @@
 #define RAMCTRL_DDR_MASK 0b01001100  /*three outputs*/
 #define RAMCTRL_MASK     0b10110010  /*all bits not used for ram control*/
 #define RAMCTRL_WE_MASK  0b01000000  /*d.6*/
+#define RAMCTRL_WE_BITNUM	6
+
+
 #define RAMCTRL_OE_MASK  0b00000100  /*d.2*/
+#define RAMCTRL_OE_BITNUM	2
+
+
 #define RAMCTRL_PL_MASK  0b00001000  /*d.3*/
+#define RAMCTRL_PL_BITNUM	3
 
 //address bus signals
 #define RAMADDR_PORT	PORTB
