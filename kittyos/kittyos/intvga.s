@@ -9,8 +9,28 @@
 #include "xram.h"
 #include "vgadefs.h"
 
+
+//#define DEBUGCOUNTING
+//#define VGAKEYPOLL
+
+
+#ifdef VGAKEYPOLL
+#include "keyps2.h"
+#endif
+
 #define io(addr) _SFR_IO_ADDR(addr)
 
+.data
+
+#ifdef VGAKEYPOLL
+ps2portbuffer:
+.byte 0
+#endif
+
+#ifdef DEBUGCOUNTING
+debuglines:
+.word 0
+#endif
 
 .text
 
@@ -98,6 +118,28 @@ PX32
 #define VSYNCTIMERHIGH  (1<<COM1A1) | (1<<COM1A0)
 
 
+.global TIMER1_CAPT_vect
+ TIMER1_CAPT_vect :
+ 
+#define TFLAG 6
+
+push zh  //start as late as 11
+push zl  
+in zl, io(SREG)
+push zl
+
+countUntil 28
+
+#ifdef VGAKEYPOLL  //this delays everything 3 clocks
+in zl, io(KEY_PIN)
+sts ps2portbuffer,zl
+#endif
+
+lds zl, vidptr
+lds zh, vidptr+1
+ijmp
+
+
 
 setvsyncdown:
 //set for vsync to go down when timer hits
@@ -111,23 +153,23 @@ subi zh, -1			//subtract negative 1 ( add 1)
 sts  framecount,zh
 
 
-jmp videxit
+jmp blankpreexit
 
 
 .global vidskippy
 vidskippy:
 //this version skips every other line
 	lds zh, evenodd
-	
-	subi zh, -128 //flip top bit of this word
-	breq skipline  //if we flpped back to even we need to increment row counter.  good place to bail
+
+	subi zh, -128 //flip top bit of this word.   -128 is also unsigned 128
+	brsh skipline  // if we flippeed from 0x8* to 0x0*, then zh was 'same or higher' than 128 (aka 0x80).  This means this is an 'even' row, so need to skip this line.  the skipline routine should also increment any 
 	
 	sts evenodd, zh  //store new even/odd value
 
-	lds zl, drawrow
-	lds zh, vcnt
-	cp zl, zh
-	jmp prebrshblanklines
+	lds zl, drawrow  //get the row number to draw (not row of ram, but row of screen)
+	lds zh, vcnt     //get total number of lines to draw
+	cp zl, zh		//compare
+	jmp prebrshblanklines  //jump (unconditional!)  jumping doesn't mess with flags
 
 
 
@@ -154,24 +196,30 @@ ldi zl, HSYNCTIMERTOGGLE | VSYNCTIMERHIGH
 sts TCCR1A, zl
 
 
+blankpreexit:
+
+//lets get line number again
+lds zl, drawrow
+cpi zl,255
+brne tovidexit  //videxit too far
+
+
+//if we are at row 255, then 255 EVEN should be 510 lines before here
+lds zl, evenodd
+andi zl, 0x7f   //mask off the 0x80 'odd' bit
+inc zl		   //count the extra rows in the low nibble
+cpi zl, 16     //510+15 == 525.  needs to be 16 for stupid reasons
+brne noreset
+ldi zl, 0
+sts drawrow,zl
+noreset:
+sts evenodd, zl
+tovidexit:
 rjmp videxit
 
 //should start with HSYNC already low
 
-.global TIMER1_CAPT_vect
- TIMER1_CAPT_vect :
- 
-#define TFLAG 6
 
-push zh  //start as late as 11
-push zl  
-in zl, io(SREG)
-push zl
-
-countUntil 28
-lds zl, vidptr
-lds zh, vidptr+1
-ijmp
 
 /*
 //countUntil 30
@@ -218,7 +266,9 @@ ijmp
 
 
 
-	
+	//TODO: CRAP, realized this is only running 512 lines not 525... need to come up with a way to count the extra lines at the end of blanking
+	//     maybe after we finish the vertical blanking pulse, we can use bits of the even/odd counter to track extra lines
+	//     just need a few more lines ...
 .global vidfull
 vidfull:  //starts at 34
 
@@ -229,7 +279,7 @@ vidfull:  //starts at 34
 	lds zh, evenodd
 	lds zl, drawrow
 	subi zh, -128 //flip top bit of this word
-	sbrc zh,7
+	sbrs zh,7	//if high bit is one, don't increment (will increment if high bit is 0)
 	inc zl
 	sts drawrow, zl
 	sts evenodd, zh
@@ -271,6 +321,7 @@ vidfull:  //starts at 34
 					//save the ram bank select bit
 					in zh,io(RAMEX_PORT)
 					push zh
+						//TODO: not yet selecing a ram bank: need to pick one explicitly
 
 						//zl still has draw row
 						
@@ -297,14 +348,17 @@ vidfull:  //starts at 34
 						PX4 //16
 						PX16 //32
 						PX32 //64
-						PX32 //96
+						PX32 //96					
 						PX32 //128
 
-						//other 128:
+						//other 128 pixels
 						PX32 
 						PX32 
+						PX32 						
+						#ifndef DEBUGCOUNTING
 						PX32 
-						PX32 
+						//Notch out some pixels on right side of screen if we are doing extra debug tracking 
+						#endif
 						
 						//end output
 						sbi io(VGA_DAC_PORT), VGA_DAC_BITNUM  //stop ramdac
@@ -343,6 +397,21 @@ vidfull:  //starts at 34
 	
 //restore machine
 videxit:
+
+
+#ifdef DEBUGCOUNTING
+//tracks a row counter for when testing counting in debugger
+//not normally included because it requires we notch out some of the display pixels to do this
+
+lds zl, debuglines
+lds zh, debuglines+1
+adiw zl, 1
+sts debuglines,zl
+sts debuglines+1,zh
+
+#endif
+
+
 pop zl
 out io(SREG), zl
 pop zl

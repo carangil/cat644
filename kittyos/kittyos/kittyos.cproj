@@ -149,6 +149,9 @@
     <Compile Include="intvga.s">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="keyps2.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="kittyos.h">
       <SubType>compile</SubType>
     </Compile>
