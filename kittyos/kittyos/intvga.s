@@ -94,6 +94,25 @@ cu_equalized\@:
 	PX
 .endm
 
+
+.macro PX2noppy_odd_even
+	nop
+	out io(RAMADDR_PIN), zl  //odd px
+	subi zh, -2  //skip 2
+	out io(RAMADDR_PORT)	,zh
+.endm
+
+
+
+.macro PX2noppy_even_odd
+//untested
+	subi zh, -2  //skip 2
+	out io(RAMADDR_PORT)	
+	nop
+	out io(RAMADDR_PIN), zl  //odd px
+.endm
+
+
 .macro PX16
 PX4
 PX4
@@ -334,17 +353,42 @@ vidfull:  //starts at 34
 						cbi io(RAMCTRL_PORT), RAMCTRL_OE_BITNUM;  //OE low, lets output
 						
 						out io(RAMADDR_PORT), zl //output rownum address
+						
+						ldi zl, 1 // delays 1 clock
 
 						sbi io(RAMCTRL_PORT), RAMCTRL_PL_BITNUM //latch
 						cbi io(RAMCTRL_PORT), RAMCTRL_PL_BITNUM //latch off			
 						lds zh, hscroll  //start value for x		
-						cbi io(VGA_DAC_PORT), VGA_DAC_BITNUM  //dac on  //fisrt pixel (0)
+						cbi io(VGA_DAC_PORT), VGA_DAC_BITNUM  //dac on  //first pixel (0)
 
-						PX  //1
-						PX  //2
-						PX  //3
-						PX4 //8
-						PX4 //12
+						//1 and 2
+	//					.macro PX2noppy_odd_even
+						nop
+						out io(RAMADDR_PIN), zl  //odd px
+						subi zh, -2  //skip 2
+						out io(RAMADDR_PORT)	,zh
+//.endm
+
+						//3 and 4
+	//					.macro PX2noppy_odd_even
+						nop
+						out io(RAMADDR_PIN), zl  //odd px
+						subi zh, -2  //skip 2
+						out io(RAMADDR_PORT)	,zh
+//.endm
+	
+						//5 6
+						PX2noppy_odd_even
+					
+						//7 8
+						PX2noppy_odd_even
+
+					
+						PX2noppy_odd_even
+							PX2noppy_odd_even
+
+
+						//PX4 //12
 						PX4 //16
 						PX16 //32
 						PX32 //64

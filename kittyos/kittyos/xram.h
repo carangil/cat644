@@ -35,6 +35,7 @@
 //address bus signals
 #define RAMADDR_PORT	PORTB
 #define RAMADDR_DDR		DDRB
+#define RAMADDR_PIN		PINB
 
 #define RAMEX_PORT				PORTA
 #define RAMEX_DDR				DDRA
