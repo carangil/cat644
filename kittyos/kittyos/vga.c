@@ -117,6 +117,51 @@ void vga_init()
 	OCR1B = HSYNCGOESLOW;
 	OCR1A = HSYNCGOESLOW;  //when sync low, do same here
 	
+	
+	#if 0
+	//mess with timer 0
+	//WGM01 selects CTC mode, reset at OC0A
+	//CS00 selects no scale
+	//com0A0 selects toggle output a
+		
+		/*
+	TCCR0A = 1<<WGM01|(1<<COM0A0); //CTC mode
+	TCCR0B = (1<<CS00); //no clock scaling
+	OCR0A=3;  //reset at 4
+	TCNT0=0;
+	*/
+	TCCR0A = 1<<WGM01; //CTC mode
+	TCCR0B = (1<<CS00); //no clock scaling
+	OCR0A=100; //set high
+	TCNT0=0;
+	
+	TCCR0A = 1<<WGM01|(1<<COM0A1)|(1<<COM0A0); //CTC mode, set high
+	TCCR0B |= 1<<FOC0A; //force high
+	TCNT1 = 0x00; //zero timer count
+	
+	
+	
+	
+	DDRB=0xff;
+	
+	
+/*
+	while(1){
+		
+		asm volatile ("nop");
+		asm volatile ("nop");
+		asm volatile ("nop");
+		asm volatile ("nop");
+		asm volatile ("nop");
+		asm volatile ("nop");
+		asm volatile ("nop");
+		asm volatile ("nop");
+		asm volatile ("nop");
+		asm volatile ("nop");
+	}
+*/
+#endif
+	
 }
 
 /* controls whether to display odd scanlines  */
