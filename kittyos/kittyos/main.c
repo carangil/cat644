@@ -85,8 +85,7 @@ int main(void)
   
    DMESG("Kernel start\n");  //testing that unitialized console does nothing bad
   
-  PORTC=123;
-  DDRC=0xfe;
+
   
    if (SUCCESS == dev_ser0.dev.ioctl(&dev_ser0.dev, IOCTL_BAUD, CONFIG_SER0_BAUD)) {
 	   
