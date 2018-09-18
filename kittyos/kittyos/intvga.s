@@ -177,35 +177,49 @@ sts keywritepos, zl
 full:
 pop yl
 
-nop
-nop
 
 
 ldi zh,0
 sts bitcount, zh
 
-jmp videxit
-dops2:
+//jmp videxit
+
+ps2done:
+
+//need to increment row counters, possible set up vsync
+
+lds zh, evenodd
+lds zl, drawrow
+subi zh, -128 //flip top bit of this word
+sbrs zh,7	//if high bit is one, don't increment (will increment if high bit is 0)
+inc zl
+sts drawrow, zl
+sts evenodd, zh
+jmp blanklinesalreadyhsync
+
+fardops2:
 
 sbi io(PCIFR), 0 ; clear flag;
 in zl, io(KEY_PIN);  //read bit, will be in position KEY_DATA_POS
-push zl
+push zl //save before timer code
 
 countUntil 52
 ldi zh, 1<<FOC1B
 sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
 
-pop zl
-
+pop zl //get it back
 
 sbrc zl, KEY_CLK_POS //skip jump if low
-jmp videxit      //clock is high: this was rising edge, not for us
+jmp ps2done      //clock is high: this was rising edge, not for us
 
 //at this point is a low edge
 
 lds zh, bitcount
 cpi zh, 10
-brsh gotbyte
+//brsh gotbyte
+brlo nogotbyte
+rjmp gotbyte
+nogotbyte:
 
 cpi zh, 9
 brsh bitinc //parity bit; don't take it in
@@ -224,12 +238,14 @@ lds zh, bitcount
 inc zh
 sts  bitcount, zh
 
+jmp ps2done
 
 
 
-jmp videxit
+//jmp videxit
 
-
+dops2:
+rjmp fardops2
 
 .global TIMER1_CAPT_vect
  TIMER1_CAPT_vect :
@@ -329,6 +345,7 @@ nop
 ldi zh, 1<<FOC1B
 sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
 
+blanklinesalreadyhsync:
 
 lds zl, drawrow
 cpi zl, 245
