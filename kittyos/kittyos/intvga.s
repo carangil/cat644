@@ -11,11 +11,17 @@
 
 
 //#define DEBUGCOUNTING
-//#define VGAKEYPOLL
+#define VGAKEYPOLL
 
+//TFLAG position in SREG
+//haven't needed it yet....
+#define TFLAG 6
+
+//use one of our single cycle registers that C doesn't touch
 
 #ifdef VGAKEYPOLL
 #include "keyps2.h"
+#define PREV_PS2CLK GPIOR0
 #endif
 
 #define io(addr) _SFR_IO_ADDR(addr)
@@ -23,8 +29,14 @@
 .data
 
 #ifdef VGAKEYPOLL
-ps2portbuffer:
+
+bitcount:
 .byte 0
+
+bits:
+.byte 0
+
+
 #endif
 
 #ifdef DEBUGCOUNTING
@@ -94,7 +106,7 @@ cu_equalized\@:
 	PX
 .endm
 
-
+#if 0
 .macro PX2noppy_odd_even
 	nop
 	out io(RAMADDR_PIN), zl  //odd px
@@ -111,7 +123,7 @@ cu_equalized\@:
 	nop
 	out io(RAMADDR_PIN), zl  //odd px
 .endm
-
+#endif
 
 .macro PX16
 PX4
@@ -137,28 +149,140 @@ PX32
 #define VSYNCTIMERHIGH  (1<<COM1A1) | (1<<COM1A0)
 
 
+gotbyte:
+//bits should contain a byte that needs to be inserted into key buffer
+
+push yl
+
+lds zl, keywritepos
+lds zh, keyreadpos
+dec zh
+andi zh, 0xF  //buffer is 15 long, wraparound
+cp zl,zh //if read-1 == write, buffer is full
+breq full 
+//otherwize we write
+
+ldi zh, lo8(keybuffer)  //get keybuffer low pointer
+add zl, zh  //add offset to pointer
+ldi zh, hi8(keybuffer) //
+lds yl, bits
+st z, yl
+
+lds zl, keywritepos
+inc zl
+andi zl, 0xF
+sts keywritepos, zl
+
+
+full:
+pop yl
+
+nop
+nop
+
+
+ldi zh,0
+sts bitcount, zh
+
+jmp videxit
+dops2:
+
+sbi io(PCIFR), 0 ; clear flag;
+in zl, io(KEY_PIN);  //read bit, will be in position KEY_DATA_POS
+push zl
+
+countUntil 52
+ldi zh, 1<<FOC1B
+sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
+
+pop zl
+
+
+sbrc zl, KEY_CLK_POS //skip jump if low
+jmp videxit      //clock is high: this was rising edge, not for us
+
+//at this point is a low edge
+
+lds zh, bitcount
+cpi zh, 10
+brsh gotbyte
+
+cpi zh, 9
+brsh bitinc //parity bit; don't take it in
+
+//take a bit
+
+lds zh, bits
+lsr zh
+sbrc zl, KEY_DATA_POS
+ori zh, 0x80
+sts bits,zh
+
+bitinc:
+
+lds zh, bitcount
+inc zh
+sts  bitcount, zh
+
+
+
+
+jmp videxit
+
+
+
 .global TIMER1_CAPT_vect
  TIMER1_CAPT_vect :
  
-#define TFLAG 6
+
+//nop
+//nop
 
 push zh  //start as late as 11
 push zl  
 in zl, io(SREG)
 push zl
 
-countUntil 28
+//need a shorter 'count until'
 
-#ifdef VGAKEYPOLL  //this delays everything 3 clocks
-in zl, io(KEY_PIN)
-sts ps2portbuffer,zl
+
+#define goal 15
+
+
+lds zl, TCNT1L		  //counts +1
+subi zl, goal+3		 //+1
+breq three			//+2 if jump           +1 otherwise
+inc zl
+breq two
+inc zl
+breq one
+nop
+rjmp zero
+  
+three:
+nop  //22 from jump
+two:
+nop  //23 from jump
+one:
+nop  //24  from jump
+zero:  
+
+//nop  //25 if from jump
+
+
+#ifdef VGAKEYPOLL  //this delays everything 3 clock
+
+in zl, io(PCIFR)
+andi zl, 1
+brne dops2
+
+
+
 #endif
 
 lds zl, vidptr
 lds zh, vidptr+1
 ijmp
-
-
 
 setvsyncdown:
 //set for vsync to go down when timer hits
@@ -314,7 +438,7 @@ vidfull:  //starts at 34
 	add zl, zh
 	
 	ldi zh, 1<<FOC1B
-	sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
+	sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 52
 	
 	
 
@@ -340,60 +464,42 @@ vidfull:  //starts at 34
 					//save the ram bank select bit
 					in zh,io(RAMEX_PORT)
 					push zh
-						//TODO: not yet selecing a ram bank: need to pick one explicitly
+				
+						andi zh, RAMEX_A16_LOW_MASK
+						out io(RAMEX_PORT), zh  //output zh  :sets video to LOW bank only (for now)
 
 						//zl still has draw row
 						
 						sbi io(RAMCTRL_PORT), RAMCTRL_WE_BITNUM
 									
 						ldi zh, 0
-						
-
+				
 						out io(RAMDATA_DDR) ,zh //ramdata is now input (floating)
 						cbi io(RAMCTRL_PORT), RAMCTRL_OE_BITNUM;  //OE low, lets output
 						
 						out io(RAMADDR_PORT), zl //output rownum address
-						
-						ldi zl, 1 // delays 1 clock
-
+				
 						sbi io(RAMCTRL_PORT), RAMCTRL_PL_BITNUM //latch
 						cbi io(RAMCTRL_PORT), RAMCTRL_PL_BITNUM //latch off			
+
 						lds zh, hscroll  //start value for x		
-						cbi io(VGA_DAC_PORT), VGA_DAC_BITNUM  //dac on  //first pixel (0)
+						out RAMADDR_PORT, zh //output first pixel address
+						cbi io(VGA_DAC_PORT), VGA_DAC_BITNUM  //dac on  //first pixel (0)  clk 84
+						PX // 1
+						PX // 2
+						PX // 3  done 4 pixels
 
-						//1 and 2
-	//					.macro PX2noppy_odd_even
-						nop
-						out io(RAMADDR_PIN), zl  //odd px
-						subi zh, -2  //skip 2
-						out io(RAMADDR_PORT)	,zh
-//.endm
-
-						//3 and 4
-	//					.macro PX2noppy_odd_even
-						nop
-						out io(RAMADDR_PIN), zl  //odd px
-						subi zh, -2  //skip 2
-						out io(RAMADDR_PORT)	,zh
-//.endm
-	
-						//5 6
-						PX2noppy_odd_even
+				//comment out 8px
+				//		PX4 //up to 8
+				//		PX4 //up to 12
 					
-						//7 8
-						PX2noppy_odd_even
-
+						PX4 // to 16
 					
-						PX2noppy_odd_even
-							PX2noppy_odd_even
+						PX16 //to 32
+						PX32 // to 64
 
-
-						//PX4 //12
-						PX4 //16
-						PX16 //32
-						PX32 //64
-						PX32 //96					
-						PX32 //128
+						PX32 
+						PX32 //to 128
 
 						//other 128 pixels
 						PX32 

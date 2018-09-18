@@ -63,4 +63,9 @@ void vga_delay(unsigned char frames);
 extern volatile unsigned char vscroll;
 extern volatile unsigned char hscroll;
 
+
+extern volatile unsigned char keybuffer[16];
+extern volatile unsigned char keyreadpos;
+extern volatile unsigned char keywritepos;
+
 #endif /* VGA_H_ */

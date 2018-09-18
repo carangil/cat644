@@ -101,7 +101,7 @@ int main(void)
 	vga_init();
 	 
 	sei();
-	  vga_slow();
+	//  vga_slow();
 	 //..SELECT_RAM_PAGE(0x123);
 	 //SELECT_RAM_BANK(0);
 	 

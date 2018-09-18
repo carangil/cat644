@@ -9,6 +9,7 @@
 #include "kittyos.h"
 
 #include <string.h>
+#include "vga.h"
 
 unsigned int test_main(environment_t* env){
 	static char buf[20];
@@ -69,6 +70,23 @@ unsigned int test_main(environment_t* env){
 	prints(env->out, " You said'");
 	prints(env->out, buf);
 	prints(env->out, "\n");
+
+	while(1){
+		
+		unsigned char i;
+		snprintf(buf, sizeof(buf), "read:%d ", keyreadpos);
+		prints(env->out, buf);
+		snprintf(buf, sizeof(buf), "write:%d ", keywritepos);
+		prints(env->out, buf);
+		for (i=keyreadpos; i!=keywritepos;(i=i+1)&0xF){
+			snprintf(buf, sizeof(buf), " %x  ", keybuffer[i]);
+			prints(env->out, buf);
+			
+		}
+			prints(env->out, "\n");
+		
+	}
+
 
 	return 3;
 		

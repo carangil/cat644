@@ -9,6 +9,8 @@
 #include "vga.h"
 #include "font.h"
 
+
+#include "keyps2.h"
 //#define VGA_KEY_INTERRUPT
 
 #ifdef VGA_KEY_INTERRUPT
@@ -69,7 +71,45 @@ extern void vidskippy();
 volatile unsigned char skiplines=0;
 void vga_init()
 {
+	
+	
 
+	PCMSK0 |= KEY_CLK; //key ps2 causes pin change interrupt interrupt flag (pc7 only)
+	//EIMSK is kept disabled: don't enable the actual interrupts, just set the flags
+	PCIFR |= 1 ; //clear the flag
+	
+	#if 0
+	for(;;){
+		
+		asm volatile("nop");
+		asm volatile("nop");
+		asm volatile("nop");
+		asm volatile("nop");
+		PORTA=0x00;  //is low
+		
+		asm volatile("nop");
+		asm volatile("nop");
+		
+		asm volatile("nop");
+		asm volatile("nop");
+		asm volatile("nop");
+				asm volatile("nop");
+				asm volatile("nop");
+				asm volatile("nop");
+						asm volatile("nop");
+						asm volatile("nop");
+						asm volatile("nop");
+						
+		PORTA=0x80;  //is high
+		
+		asm volatile("nop");
+		PCIFR |= 1 ; //clear interrupt flag
+		asm volatile("nop");
+		asm volatile("nop");
+		asm volatile("nop");
+		
+	}
+	#endif
 
 
 	vidptr = vidskippy;
@@ -291,4 +331,11 @@ void vga_delay(unsigned char frames)
 	
 	
 }
+
+//keyboard
+
+volatile unsigned char keybuffer[16];
+volatile unsigned char keyreadpos;
+volatile unsigned char keywritepos;
+
 
