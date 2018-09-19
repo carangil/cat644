@@ -8,7 +8,7 @@
 #include "xram.h"
 #include "vga.h"
 #include "font.h"
-
+#include "drivers.h"
 
 #include "keyps2.h"
 //#define VGA_KEY_INTERRUPT
@@ -334,8 +334,26 @@ void vga_delay(unsigned char frames)
 
 //keyboard
 
-volatile unsigned char keybuffer[16];
+volatile unsigned char keybuffer[ 0x10 ];
 volatile unsigned char keyreadpos;
 volatile unsigned char keywritepos;
 
 
+
+
+uchar key_getcode(chardevice_t* dev)
+{
+	unsigned char c;
+	while (keyreadpos == keywritepos); //wait   while empty
+	c = keybuffer[keyreadpos];
+	keyreadpos = (keyreadpos+1) & 0xF;
+	return c;
+}
+
+unsigned char key_kbhit(chardevice_t* dev)
+{
+	return (keyreadpos != keywritepos);
+}
+
+//create the chardevice
+chardevice_t dev_keyraw = {{NULL, DEV_FLAG_UNINIT}, NULL, key_getcode, key_kbhit };

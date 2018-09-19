@@ -14,12 +14,15 @@
 typedef struct environment_s {
 	chardevice_t* in;
 	chardevice_t* out;
-	char* cmdline; //any parameters given to program?
+	
+	chardevice_t* key;  //stick raw keyboard here until we have the device list setup
+	
+	//char* cmdline; //any parameters given to program?
 }environment_t;
 
 
 void prints(chardevice_t* dev, char* s);
 uint16_t reads( chardevice_t* dev, char* str, uint16_t buffersize, unsigned char echo);
 
-
+extern chardevice_t dev_keyraw;
 #endif /* KITTYOS_H_ */

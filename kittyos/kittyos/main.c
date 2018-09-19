@@ -157,9 +157,10 @@ int main(void)
 	*/
 	
    	environment_t env;  	
-   	env.cmdline= " testing";
+   	//env.cmdline= " testing";
    	env.in = &dev_ser0;
    	env.out = &dev_ser0;
+	env.key = &dev_keyraw;
 	DMESG("Start user program\n");
     DMESGF("Prog returned %d\nHLT\n", test_main(&env));
          

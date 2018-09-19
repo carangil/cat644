@@ -155,6 +155,9 @@ debuglines:
 gotbyte:
 	//bits should contain a byte that needs to be inserted into key buffer
 
+	push xl
+	ldi xl, 0  //need a zero
+
 	push yl					//need a register
 	lds zl, keywritepos
 	lds zh, keyreadpos
@@ -166,7 +169,9 @@ gotbyte:
 	//otherwize we write
 	ldi zh, lo8(keybuffer)  //get keybuffer low pointer
 	add zl, zh				//add offset to pointer
-	ldi zh, hi8(keybuffer)	
+	ldi zh, hi8(keybuffer)	 //get high part of pointer
+	adc zh, xl				//add the zero to it, but WITH carry
+
 	lds yl, bits
 	st z, yl
 
@@ -178,6 +183,7 @@ gotbyte:
 
 full:						//runs if full, or if we inserted a byte from above
 	pop yl
+	pop xl
 	ldi zh,0
 	sts bitcount, zh
 
@@ -256,7 +262,7 @@ dops2:
 	//nop
 	//nop
 
-	push zh  //start as late as 11
+	push zh  //start as late as 10
 	push zl  
 	in zl, io(SREG)
 	push zl
@@ -445,14 +451,15 @@ vidfull:  //starts at 34
 				
 						//now set the state we want
 
+						//pull up write enable (ending any write cycle that was happening. Must be first thing to do before anything else)
+						sbi io(RAMCTRL_PORT), RAMCTRL_WE_BITNUM
+						
 						//set video ram bank 
 						andi zh, RAMEX_A16_LOW_MASK
 						out io(RAMEX_PORT), zh  //output zh  :sets video to LOW bank only (for now)
 
-						//note: zl still has draw row
+						//note: zl still has draw row from a bunch of lines above
 						
-						//pull up right enable (ending any write cycle that was happening. TODO BUG BUG BUG: if changed bank in write, memory is corrupt! )
-						sbi io(RAMCTRL_PORT), RAMCTRL_WE_BITNUM
 									
 						ldi zh, 0
 						out io(RAMDATA_DDR) ,zh //ramdata is now input (floating or pullup state)
@@ -466,7 +473,7 @@ vidfull:  //starts at 34
 
 						lds zh, hscroll			//start value for x		
 						out RAMADDR_PORT, zh	//output first pixel address
-						cbi io(VGA_DAC_PORT), VGA_DAC_BITNUM  //dac on  //first pixel (0)  clk 84 This instruction takes 2 clocks, but 1st clock is R, second is write
+						cbi io(VGA_DAC_PORT), VGA_DAC_BITNUM  //dac on  //first pixel (0)  clk 86 This instruction takes 2 clocks, but 1st clock is R, second is write
 						PX // 1
 						PX // 2
 						PX // 3  done 4 pixels
