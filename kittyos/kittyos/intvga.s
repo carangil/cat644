@@ -186,7 +186,7 @@ full:						//runs if full, or if we inserted a byte from above
 	pop xl
 	ldi zh,0
 	sts bitcount, zh
-
+	jmp videxit
 
 //done handling this invokation of keyboard routine
 ps2done:
@@ -205,18 +205,20 @@ ps2done:
 
 fardops2:
 
-	sbi io(PCIFR), 0 ; clear flag;
-	in zl, io(KEY_PIN);		//read bit, will be in position KEY_DATA_POS
-	push zl					//save before timer code
+//	sbi io(PCIFR), 0 ; clear flag;
+	//in zl, io(KEY_PIN);		//read bit, will be in position KEY_DATA_POS
+	//push zl					//save before timer code
 
-	countUntil 52
-	ldi zh, 1<<FOC1B
-	sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
+	//countUntil 52
+	//ldi zh, 1<<FOC1B
+	//sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
 
-	pop zl //get it back
+	//pop zl //get it back
+	in zl, io(GPIOR0)
 
 	sbrc zl, KEY_CLK_POS //skip the next jump if low
-	jmp ps2done      //clock is high: this was rising edge, not for us
+	jmp videxit
+	//jmp ps2done      //clock is high: this was rising edge, not for us
 
 	//at this point is a low edge
 
@@ -246,14 +248,14 @@ bitinc:
 	inc zh
 	sts  bitcount, zh
 
-	jmp ps2done
+	//jmp ps2done
+	jmp videxit
 
 
 
 //jmp videxit
 
-dops2:
-	rjmp fardops2
+
 
 .global TIMER1_CAPT_vect
  TIMER1_CAPT_vect :
@@ -296,7 +298,13 @@ zero:
 #ifdef VGAKEYPOLL  //this delays everything 3 clock
 	in zl, io(PCIFR)
 	andi zl, 1
-	brne dops2
+	out io(PCIFR), zl  //if it was set, clear it, otherwise don't. for some reason clearing without it set causes weird problems
+	
+	in zh, io(KEY_PIN)
+	andi zh, KEY_DATA | KEY_CLK
+	or zh, zl
+	out io(GPIOR0), zh
+	//brne dops2
 #endif
 
 	//lookup which video line driver is being used
@@ -333,6 +341,8 @@ vidskippy:
 	cp zl, zh		//compare
 	jmp prebrshblanklines  //jump (unconditional!)  jumping doesn't mess with flags
 
+dops2:
+	rjmp fardops2
 
 blankskip:
 
@@ -346,6 +356,9 @@ blanklines:
 
 	ldi zh, 1<<FOC1B
 	sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
+
+	
+
 
 blanklinesalreadyhsync:
 
@@ -379,6 +392,12 @@ noreset:
 	sts evenodd, zl
 
 tovidexit:
+
+	//do ps2 at end with captured values
+	in zl, io(GPIOR0)
+	andi zl, 1
+	brne dops2
+
 	rjmp videxit
 
 	//should start with HSYNC already low
@@ -495,7 +514,7 @@ vidfull:  //starts at 34
 						PX32 
 						PX32 						
 						#ifndef DEBUGCOUNTING
-						PX32 
+			//			PX32 
 						//Notch out some pixels on right side of screen if we are doing extra debug tracking 
 						#endif
 						
@@ -531,7 +550,9 @@ vidfull:  //starts at 34
 	pop zl
 	out io(RAMCTRL_PORT), zl
 		
-
+	in zh, io(GPIOR0)
+	andi zh, 1
+	brne todops2
 
 	
 //restore cpu state
@@ -557,3 +578,6 @@ videxit:
 	pop zh
 	reti
 	//better be done in less than 636 cycles
+
+todops2:
+	jmp fardops2

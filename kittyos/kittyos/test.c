@@ -75,21 +75,31 @@ unsigned int test_main(environment_t* env){
 		
 		unsigned char i;
 		
+		if(env->in->ready(env->in)){
+			reads(env->in, buf, sizeof(buf), 1);
+			if (buf[0]=='s')
+				vga_slow();
+				
+			if (buf[0]=='f')
+				vga_fast();
+		}
+		
 		if (env->key->ready(env->key)) {
 			snprintf(buf, sizeof(buf) , "[KEY %x]", env->key->read1(env->key));
 			prints(env->out, buf);
 		}
 		
-		snprintf(buf, sizeof(buf), "read:%d ", keyreadpos);
-		prints(env->out, buf);
-		snprintf(buf, sizeof(buf), "write:%d ", keywritepos);
-		prints(env->out, buf);
+		//snprintf(buf, sizeof(buf), "read:%d ", keyreadpos);
+	//	prints(env->out, buf);
+	//	snprintf(buf, sizeof(buf), "write:%d ", keywritepos);
+	//	prints(env->out, buf);
+		/*
 		for (i=keyreadpos; i!=keywritepos;i=(i+1)&0xF){
 			snprintf(buf, sizeof(buf), " %x  ", keybuffer[i]);
 			prints(env->out, buf);
 			
-		}
-			prints(env->out, "\n");
+		}*/
+			//prints(env->out, "\n");
 		
 	}
 

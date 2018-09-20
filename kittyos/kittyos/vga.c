@@ -112,7 +112,8 @@ void vga_init()
 	#endif
 
 
-	vidptr = vidskippy;
+	vidptr = vidfull;
+	//vidptr = vidskippy;
 
 	
 	//TIMSK1=_BV(OCIE1A);
