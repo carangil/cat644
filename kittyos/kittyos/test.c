@@ -74,7 +74,11 @@ unsigned int test_main(environment_t* env){
 	while(1){
 		
 		unsigned char i;
-		
+
+		hscroll +=2;
+		vga_delay(4);
+
+
 		if(env->in->ready(env->in)){
 			reads(env->in, buf, sizeof(buf), 1);
 			if (buf[0]=='s')

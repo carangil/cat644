@@ -13,15 +13,13 @@
 //#define DEBUGCOUNTING
 #define VGAKEYPOLL
 
-//TFLAG position in SREG
-//haven't needed it yet....
-#define TFLAG 6
+
 
 //use one of our single cycle registers that C doesn't touch
 
 #ifdef VGAKEYPOLL
 #include "keyps2.h"
-#define PREV_PS2CLK GPIOR0
+
 #endif
 
 #define io(addr) _SFR_IO_ADDR(addr)
@@ -31,7 +29,7 @@
 #ifdef VGAKEYPOLL
 
 bitcount:
-.byte 0
+.byte 10
 
 bits:
 .byte 0
@@ -186,39 +184,59 @@ full:						//runs if full, or if we inserted a byte from above
 	pop xl
 	ldi zh,0
 	sts bitcount, zh
-	jmp videxit
 
-//done handling this invokation of keyboard routine
-ps2done:
 
-	//need to increment row counters, possible set up vsync
-	//this copied from vidfull.
+	//done handling this invokation of keyboard routine
+ps2done:  
+	in zh, io(GPIOR1)  //get timer value back
+	cpi zh, 2  //check if beyond clock 512
+	brsh  skipreturn  //will not return to user program
+
+	//now assume will exit to user code
+	brtc quickexit  //no t flag, so no advanced state was set
+	jmp restoreram
 	
-	lds zh, evenodd
-	lds zl, drawrow
-	subi zh, -128 //flip top bit of this word
-	sbrs zh,7	//if high bit is one, don't increment (will increment if high bit is 0)
-	inc zl
-	sts drawrow, zl
-	sts evenodd, zh
-	jmp blanklinesalreadyhsync
+quickexit:
+	jmp videxit
+	
+skipreturn:  //only here is TCNT1 > 512. 
+	//set up to re-enter video interrupt without exiting
+	//if counter is over 40 wait until it is not (wait until it overflows)
+	lds zl, TCNT1L
+	cpi zl, 40
+	brsh skipreturn
 
-fardops2:
 
-//	sbi io(PCIFR), 0 ; clear flag;
-	//in zl, io(KEY_PIN);		//read bit, will be in position KEY_DATA_POS
-	//push zl					//save before timer code
+	
 
-	//countUntil 52
-	//ldi zh, 1<<FOC1B
-	//sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
+	countUntil 26
 
-	//pop zl //get it back
-	in zl, io(GPIOR0)
+	in zh, io(PCIFR)  //capture flag
+	sbi io(PCIFR), 0 ; clear flag;
+	in zl, io(KEY_PIN)  //capture port
+	andi zl, 0b11000000
+	or zl, zh
+	out io(GPIOR0), zl
+
+	//lookup which video line driver is being used
+	lds zl, vidptr
+	lds zh, vidptr+1
+	ijmp
+
+fardops2:  //no assume hsync already happened
+
+
+	
+	in zl, io(GPIOR0);	  //take the captured port data
+	//in zl, io(KEY_PIN);	  //capture the port that changed
+		
+	lds zh, TCNT1L
+	lds zh, TCNT1H
+	out io(GPIOR1), zh  //save counter high
+
 
 	sbrc zl, KEY_CLK_POS //skip the next jump if low
-	jmp videxit
-	//jmp ps2done      //clock is high: this was rising edge, not for us
+	jmp ps2done      //clock is high: this was rising edge, not for us
 
 	//at this point is a low edge
 
@@ -234,14 +252,6 @@ fardops2:
 	cpi zh, 9
 	brsh bitinc //parity bit; don't take it in
 
-
-	cpi zh, 0 //check if bit zero (first bit)
-	brne notstart
-
-	sbrc zl, KEY_DATA_POS  //if bit is low, skip next statement
-	rjmp noinc				//bit is high, so skip counting it (bad start bit; all frames start with zero)
-
-notstart:
 	//take a bit
 
 	lds zh, bits
@@ -250,22 +260,27 @@ notstart:
 	ori zh, 0x80
 	sts bits,zh
 
-	
 bitinc:
 
 	lds zh, bitcount
 	inc zh
 	sts  bitcount, zh
 
-noinc:
-	//jmp ps2done
-	jmp videxit
+	jmp ps2done
 
-checkstartbit:
+
 
 //jmp videxit
 
-
+skipsavedelay:
+	push zl
+	ldi zl,3
+ssdc:
+	dec zl
+	brne ssdc
+	pop zl
+	nop
+	jmp doneskipsave
 
 .global TIMER1_CAPT_vect
  TIMER1_CAPT_vect :
@@ -304,13 +319,23 @@ one:
 zero:  
 	//nop  //25 if from jump  , but don't waste time doing nop because it is equalized now
 
+	clt //clear T
 
-#ifdef VGAKEYPOLL  //this delays everything a few clock
-	in zl, io(PCIFR)
-	out io(PCIFR), zl  //clear all PCIFR flags that were set
-	bst zl, 0   //store bit in T flag
-	in zh, io(KEY_PIN)
-	out io(GPIOR0), zh
+
+
+#ifdef VGAKEYPOLL  //this delays everything clocks
+//	in zl, io(PCIFR)
+//	andi zl, 1
+//	brne dops2
+
+
+	in zh, io(PCIFR)  //capture flag
+	sbi io(PCIFR), 0 ; clear flag;
+	in zl, io(KEY_PIN)  //capture port
+	andi zl, 0b11000000
+	or zl, zh
+	out io(GPIOR0), zl
+
 #endif
 
 	//lookup which video line driver is being used
@@ -347,8 +372,6 @@ vidskippy:
 	cp zl, zh		//compare
 	jmp prebrshblanklines  //jump (unconditional!)  jumping doesn't mess with flags
 
-dops2:
-	rjmp fardops2
 
 blankskip:
 
@@ -362,9 +385,6 @@ blanklines:
 
 	ldi zh, 1<<FOC1B
 	sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
-
-	
-
 
 blanklinesalreadyhsync:
 
@@ -399,16 +419,23 @@ noreset:
 
 tovidexit:
 
-	//do ps2 at end with captured values
+	//in zl, io(PCIFR)
 	in zl, io(GPIOR0)
-	andi zl, 1
-	brne dops2
+	andi zl, 1<<PCIF0
+	brne todops2  //do ps2 if there is a pin change to handle
 
+	//if there is no pinchange, this might still have state to restore
+	
+	brtc quickexit2  //no t flag, so no advanced state was set
+	jmp restoreram  //restore state, if needed
+	
+quickexit2:
 	rjmp videxit
 
 	//should start with HSYNC already low
 
-
+todops2:
+jmp dops2
 
 skipline:
 
@@ -422,7 +449,8 @@ skipline:
 	jmp blanklines
 
 
-
+skipsave:  
+rjmp skipsavedelay
 	
 .global vidfull
 vidfull:  //starts at 34
@@ -449,12 +477,13 @@ vidfull:  //starts at 34
 	ldi zh, 1<<FOC1B
 	sts TCCR1C ,zh   //hsync goes high here ... beginning of front porch   //clock 53
 	
-
 	
 	//Now very carefully save the hardware state.  It might be in the middle of a write, read, changing page, anything
-	
+  
+
 	//save ram WE/OE/PL bits
-	
+	brts skipsave
+	set
 	in zh, io(RAMCTRL_PORT)
 	push zh
 
@@ -484,105 +513,85 @@ vidfull:  //starts at 34
 						out io(RAMEX_PORT), zh  //output zh  :sets video to LOW bank only (for now)
 
 						//note: zl still has draw row from a bunch of lines above
-						
+doneskipsave:
 									
-						ldi zh, 0
+						ldi zh, 0  //clock 76 if saved state
 						out io(RAMDATA_DDR) ,zh //ramdata is now input (floating or pullup state)
 
 						cbi io(RAMCTRL_PORT), RAMCTRL_OE_BITNUM;  //OE low, ram now takes the bus
 						
 						out io(RAMADDR_PORT), zl				   //output rownum address. zl can now be discarded
-						
-						ldi zl, 1 //zl is one for toggling
-
+				
 						sbi io(RAMCTRL_PORT), RAMCTRL_PL_BITNUM //latch high
 						cbi io(RAMCTRL_PORT), RAMCTRL_PL_BITNUM //latch low			
 
 						lds zh, hscroll			//start value for x		
 						out RAMADDR_PORT, zh	//output first pixel address
-						
-			
 						cbi io(VGA_DAC_PORT), VGA_DAC_BITNUM  //dac on  //first pixel (0)  clk 86 This instruction takes 2 clocks, but 1st clock is R, second is write
-						PX  //1
-						PX  //2
-								
-								
-						//skip 3 for now (there is one last one later)
+						PX // 1
+						PX // 2
+						PX // 3  done 4 pixels
 
-
-						PX4 //3,4,5,6
-						PX4	//7,8,9,10
-						PX4 //11,12,13,14 
-
-						//15 PIXELS SO FAR
-
-
-						PX16 //31 pixels
-
-
-						PX32  //63 pixels
-						PX32  //95 pixes
-
-						PX64 //150 pixels
-						PX64 //223 pixels
-						
-								
-														
-						brts shortline
-
-						out io(RAMADDR_PIN), zl  //toggle for odd address 
-						subi zh, -2 //next even address
-						out io(RAMADDR_PORT), zh	//even
-
-						PX															//3
-						PX															//4
-						PX4															//8
-	//					PX4															//12
-		//				PX4															//16
-						PX16														//32
+				//comment out 8px
+				//		PX4 //up to 8
+				//		PX4 //up to 12
 					
+						PX4 // to 16
+					
+						PX16 //to 32
+						PX32 // to 64
 
-						/* possibly cut short final 32 pixels */
+						PX32 
+						PX32 //to 128
 
-						
-shortline:
-						PX  //odd (final pixel)			
-		
+						//other 128 pixels
+						PX32 
+						PX32 
+						PX32 						
+						#ifndef DEBUGCOUNTING
+						PX32 
+						//Notch out some pixels on right side of screen if we are doing extra debug tracking 
+						#endif
 						
 						//end output
 						sbi io(VGA_DAC_PORT), VGA_DAC_BITNUM		//stop ramdac
 						sbi io(RAMCTRL_PORT), RAMCTRL_OE_BITNUM		//ram floating (bus is clear)
 						
+						//in zl, io(PCIFR)
+						in zl, io(GPIOR0)
+						andi zl, 1<<PCIF0
+						brne dops2  //do ps2 if there is a pin change to handle
+
+restoreram:				//can jump here from ps2 code if done handling in time to exit to user, and there was a saved state to restore
 						//restore the previous page the user program set up
-						lds zh, lastpage   //get last page user program switched to
-						out io(RAMADDR_PORT), zh //output that address
+						lds zl, lastpage   //get last page user program switched to
+						out io(RAMADDR_PORT), zl //output that address
 						sbi io(RAMCTRL_PORT), RAMCTRL_PL_BITNUM  //latch up
 						cbi io(RAMCTRL_PORT), RAMCTRL_PL_BITNUM //latch down
 
 					//restore ram bank select
-					pop zh
-					out io(RAMEX_PORT), zh
+					pop zl
+					out io(RAMEX_PORT), zl
 
 				//restore address
-				pop zh
-				out io(RAMADDR_PORT), zh
+				pop zl
+				out io(RAMADDR_PORT), zl
 
 			//restore data lines
-			pop zh
-			out io(RAMDATA_PORT), zh
+			pop zl
+			out io(RAMDATA_PORT), zl
 
 
 			//restore data direction
-		pop zh
-		out io(RAMDATA_DDR), zh 
+		pop zl
+		out io(RAMDATA_DDR), zl
 
 
 	//restore ram command (oe/we, whatever)
-	pop zh
-	out io(RAMCTRL_PORT), zh
+	pop zl
+	out io(RAMCTRL_PORT), zl
 		
 
-	brts todops2
 
 	
 //restore cpu state
@@ -606,8 +615,9 @@ videxit:
 	out io(SREG), zl
 	pop zl
 	pop zh
+	sbi io(TIFR1), ICF1 //clear overflow flag,in case we stayed in more than 1 loop
 	reti
 	//better be done in less than 636 cycles
 
-todops2:
-	jmp fardops2
+dops2:
+	rjmp fardops2
