@@ -26,6 +26,7 @@ unsigned int test_main(environment_t* env){
 	memcpyi2x(0x2f0, b, sizeof (b) );
 	prints(env->out, "Hello world\n");
 	
+	/*
 	for (i=0;i<50;i++)
 		b[i]= 0;
 		
@@ -55,14 +56,14 @@ unsigned int test_main(environment_t* env){
 		prints(env->out, "\n");
 	}
 	
-	SELECT_RAM_BANK(0);
+	SELECT_RAM_BANK(1);
 	memcpyx2i( b, 0x2f0, sizeof (b) );
 	
 	for (i=0;i<50;i++){
 		prints(env->out, utoa(b[i], buf, 16));
 		prints(env->out, "\n");
 	}
-		
+		*/
 		
 	prints(env->out, "Bye world\n");
 	
@@ -75,8 +76,8 @@ unsigned int test_main(environment_t* env){
 		
 		unsigned char i;
 
-		hscroll +=2;
-		vga_delay(4);
+		//hscroll +=2;
+	//	vga_delay(4);
 
 
 		if(env->in->ready(env->in)){
@@ -89,7 +90,8 @@ unsigned int test_main(environment_t* env){
 		}
 		
 		if (env->key->ready(env->key)) {
-			snprintf(buf, sizeof(buf) , "[KEY %x]", env->key->read1(env->key));
+			unsigned char c = env->key->read1(env->key);
+			snprintf(buf, sizeof(buf) , "[KEY %x %c]",(int) c, c);
 			prints(env->out, buf);
 		}
 		

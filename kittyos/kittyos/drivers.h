@@ -15,6 +15,7 @@
 //device flag
 #define DEV_FLAG_ERR	1
 #define DEV_FLAG_UNINIT	2
+#define DEV_FLAG_PUSHBACK	4
 
 typedef  struct device_s* devid;
 
@@ -32,7 +33,6 @@ typedef struct chardevice_s {
 	uchar (*ready)(struct chardevice_s* dev);
 } chardevice_t;
 
-//disk 
 
 typedef uint32_t  blocknum;
 typedef struct blockdevice_s {
@@ -52,6 +52,8 @@ typedef struct exedevice_s{
 } exe_t;
 #define IOCTL_EXE	2
 
+
+#define IOCTL_ENABLE 3
 
 
 #endif /* DRIVERS_H_ */

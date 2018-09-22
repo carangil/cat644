@@ -146,7 +146,19 @@
     <Compile Include="font.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="intvga-bad.s">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="intvga.s">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="keycodes.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="keycodes.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="keyps2.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="keyps2.h">

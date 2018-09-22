@@ -5,10 +5,12 @@
  * Created: 9/4/2018 8:39:13 PM
  *  Author: mark
  */ 
+#define ASM
 #include <avr/io.h>
 #include "xram.h"
 #include "vgadefs.h"
 
+#ifdef VGA_SPAGHETTI
 
 //#define DEBUGCOUNTING
 #define VGAKEYPOLL
@@ -29,7 +31,7 @@
 #ifdef VGAKEYPOLL
 
 bitcount:
-.byte 10
+.byte 0
 
 bits:
 .byte 0
@@ -154,33 +156,33 @@ gotbyte:
 	//bits should contain a byte that needs to be inserted into key buffer
 
 	push xl
-	ldi xl, 0  //need a zero
+	
 
-	push yl					//need a register
 	lds zl, keywritepos
+	mov xl, zl						//xl = old write position   
+	inc zl //new write position
+	andi zl, 0xF //wraparound		//zl = new write position
+	
 	lds zh, keyreadpos
-	dec zh
-	andi zh, 0xF			//buffer is 15 long, wraparound
-	cp zl,zh				//if read-1 == write, buffer is full
-	breq full 
-
-	//otherwize we write
-	ldi zh, lo8(keybuffer)  //get keybuffer low pointer
-	add zl, zh				//add offset to pointer
-	ldi zh, hi8(keybuffer)	 //get high part of pointer
-	adc zh, xl				//add the zero to it, but WITH carry
-
-	lds yl, bits
-	st z, yl
-
-	lds zl, keywritepos
-	inc zl
-	andi zl, 0xF
+	cp zh,zl						//if xl == zl, buffer is full
+	breq full  //if buffer full, we loose
+		
+	//save new write position
 	sts keywritepos, zl
+
+	ldi zl, lo8(keybuffer)
+	add zl, xl
+	ldi zh, hi8(keybuffer)
+	ldi xl, 0
+	adc zh,xl
+
+	lds xl, bits
+	st z, xl
+
 
 
 full:						//runs if full, or if we inserted a byte from above
-	pop yl
+
 	pop xl
 	ldi zh,0
 	sts bitcount, zh
@@ -203,16 +205,16 @@ skipreturn:  //only here is TCNT1 > 512.
 	//set up to re-enter video interrupt without exiting
 	//if counter is over 40 wait until it is not (wait until it overflows)
 	lds zl, TCNT1L
-	cpi zl, 40
+	cpi zl, 30
 	brsh skipreturn
-
+	
+	sbi io(TIFR1), ICF1 //clear overflow flag,in case we stayed in more than 1 loop
 
 	
-
-	countUntil 26
+	countUntil 25
 
 	in zh, io(PCIFR)  //capture flag
-	sbi io(PCIFR), 0 ; clear flag;
+	out io(PCIFR) , zh //clear (all!) pin change flags that were set	
 	in zl, io(KEY_PIN)  //capture port
 	andi zl, 0b11000000
 	or zl, zh
@@ -252,6 +254,17 @@ fardops2:  //no assume hsync already happened
 	cpi zh, 9
 	brsh bitinc //parity bit; don't take it in
 
+
+	cpi zh, 0 //check if bit zero (first bit)
+	brne notstart
+
+	sbrc zl, KEY_DATA_POS  //if bit is low, skip next statement
+	rjmp noinc				//bit is high, so skip counting it (bad start bit; all frames start with zero)
+
+	notstart:
+
+
+
 	//take a bit
 
 	lds zh, bits
@@ -265,7 +278,7 @@ bitinc:
 	lds zh, bitcount
 	inc zh
 	sts  bitcount, zh
-
+noinc:
 	jmp ps2done
 
 
@@ -307,19 +320,19 @@ ssdc:
 	breq two
 	inc zl
 	breq one
-	nop
+	clt		//was NOP.  at least one of the nops from here, three, two, or one will run.  
 	rjmp zero
   
 three:
-	nop  //22 from jump
+	clt  //22 from jump
 two:
-	nop  //23 from jump
+	clt  //23 from jump
 one:
-	nop  //24  from jump
+	clt  //24  from jump
 zero:  
 	//nop  //25 if from jump  , but don't waste time doing nop because it is equalized now
 
-	clt //clear T
+//	clt //moved to the NOPs above
 
 
 
@@ -330,7 +343,7 @@ zero:
 
 
 	in zh, io(PCIFR)  //capture flag
-	sbi io(PCIFR), 0 ; clear flag;
+	out io(PCIFR) , zh //clear (all!) pin change flags that were set	
 	in zl, io(KEY_PIN)  //capture port
 	andi zl, 0b11000000
 	or zl, zh
@@ -526,7 +539,7 @@ doneskipsave:
 						cbi io(RAMCTRL_PORT), RAMCTRL_PL_BITNUM //latch low			
 
 						lds zh, hscroll			//start value for x		
-						out RAMADDR_PORT, zh	//output first pixel address
+						out io(RAMADDR_PORT), zh	//output first pixel address
 						cbi io(VGA_DAC_PORT), VGA_DAC_BITNUM  //dac on  //first pixel (0)  clk 86 This instruction takes 2 clocks, but 1st clock is R, second is write
 						PX // 1
 						PX // 2
@@ -534,9 +547,9 @@ doneskipsave:
 
 				//comment out 8px
 				//		PX4 //up to 8
-				//		PX4 //up to 12
+						PX4 //up to 12
 					
-						PX4 // to 16
+					//	PX4 // to 16
 					
 						PX16 //to 32
 						PX32 // to 64
@@ -615,9 +628,11 @@ videxit:
 	out io(SREG), zl
 	pop zl
 	pop zh
-	sbi io(TIFR1), ICF1 //clear overflow flag,in case we stayed in more than 1 loop
+
 	reti
 	//better be done in less than 636 cycles
 
 dops2:
 	rjmp fardops2
+
+#endif

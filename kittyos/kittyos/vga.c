@@ -10,134 +10,39 @@
 #include "font.h"
 #include "drivers.h"
 
-#include "keyps2.h"
-//#define VGA_KEY_INTERRUPT
-
-#ifdef VGA_KEY_INTERRUPT
-
-	#include "keyps2.h"
-	unsigned char kp=0;
 
 
-	/* This is basically a copy of the ps2 ISR.  It gets run as a 'tag along' with video*/
-	
-
-	void inline  keypoll(unsigned char portin) {
-	
-		char inbit = (portin & KEY_DATA)<<1;
-		
-		
-		
-		
-		//this was a falling edge
-		
-		if (keybitcnt==0)
-		{
-			if (inbit==0)
-			keybitcnt++;
-		}
-		else if (keybitcnt<9)
-		{
-			keybits = keybits>>1;
-			keybits |= inbit;
-			keybitcnt++;
-		}
-		else if (keybitcnt==9)
-		keybitcnt++;
-		else { //cnt is 10 (11th bit of frame)
-			if (inbit==128)
-			{
-				keyb[keyb_writepos] = keybits;  //write in buffer
-				if (keyb_writepos==(KEYB_SIZE-1))
-				keyb_writepos=0;
-				else
-				keyb_writepos++;	
-			}	
-			keybitcnt=0;
-		}	
-	
-	}
-
-#endif
-
-
- unsigned char hires=0;
 
 //goes to video interrupt
 void * vidptr;
 extern void vidfull();
 extern void vidskippy();
 
-volatile unsigned char skiplines=0;
 void vga_init()
 {
-	
-	
-
-	PCMSK0 |= KEY_CLK; //key ps2 causes pin change interrupt interrupt flag (pc7 only)
-	//EIMSK is kept disabled: don't enable the actual interrupts, just set the flags
-	PCIFR |= 1 ; //clear the flag
-	
-	#if 0
-	for(;;){
-		
-		asm volatile("nop");
-		asm volatile("nop");
-		asm volatile("nop");
-		asm volatile("nop");
-		PORTA=0x00;  //is low
-		
-		asm volatile("nop");
-		asm volatile("nop");
-		
-		asm volatile("nop");
-		asm volatile("nop");
-		asm volatile("nop");
-				asm volatile("nop");
-				asm volatile("nop");
-				asm volatile("nop");
-						asm volatile("nop");
-						asm volatile("nop");
-						asm volatile("nop");
-						
-		PORTA=0x80;  //is high
-		
-		asm volatile("nop");
-		PCIFR |= 1 ; //clear interrupt flag
-		asm volatile("nop");
-		asm volatile("nop");
-		asm volatile("nop");
-		
-	}
-	#endif
 
 
-	vidptr = vidfull;
-	//vidptr = vidskippy;
+
+
+	//vidptr = vidfull;
+	vidptr = vidskippy;
 
 	
-	//TIMSK1=_BV(OCIE1A);
-	//TIMSK1=_BV(TOIE1);  //get on overflow
+	
 	TIMSK1=_BV(ICIE1);  //get on match to ICR
-	//TCCR1B = (1<<CS10)  | (1<<WGM12 );
 	TCNT1 = 0x00; //zero timer count
 	
 	
 	TCCR1B = (1<<CS10)  | (1<<WGM13 ) | (1<<WGM12 ); //unscaled clock, CTC with ICR as top 
-		ICR1 = 636; //overflow every 636
-		OCR1B = 636-76+40;  //trip vsync here
-		//OCR1B = 636;  //trip hsync here
-		
-//	OCR1A = 636;  //Every 636 cycles do video interrupt
-	
+	ICR1 = 636; //reset every 636
+
+
 	VGA_DDR |= VGA_DDR_MASK;   //enable vga outputs
 	VGA_PORT = (VGA_PORT & VGA_MASK) | VGA_HSYNC_MASK | VGA_VSYNC_MASK ;  //HSYNC and VSYNC are kept high
 	
 	VGA_DAC_DDR |= VGA_DAC_MASK; //enable  1 output
 	VGA_DAC_PORT |= VGA_DAC_MASK; //turn that bit on
 	
-	
-
 	//1B is PD4       (hsync)
 	//1A  is PD5	(vsync)
 	
@@ -146,100 +51,47 @@ void vga_init()
 	
 	TCCR1C = (1<<FOC1A) | (1<<FOC1B)  ;// do timer match now   Both high now.
 	
-	asm volatile ("nop");
 	
 	//use channel B to drive hync low when timer goes off
 	
-	//TCCR1A = (1<<COM1B1);  //clear OC1B, on match, which is hsync  // also , since COM1Ax are not set anymore, this pin goes to 'normal' which is set to high
-	
-	TCCR1A = (1<<COM1B0);  //toggle OC1B on match 
+	TCCR1A = (1<<COM1B0);  //toggle OC1B on match ; timer event can do both sides of hsync
 	
 	
 	OCR1B = HSYNCGOESLOW;
 	OCR1A = HSYNCGOESLOW;  //when sync low, do same here
-	
-	
-	#if 0
-	//mess with timer 0
-	//WGM01 selects CTC mode, reset at OC0A
-	//CS00 selects no scale
-	//com0A0 selects toggle output a
-		
-		/*
-	TCCR0A = 1<<WGM01|(1<<COM0A0); //CTC mode
-	TCCR0B = (1<<CS00); //no clock scaling
-	OCR0A=3;  //reset at 4
-	TCNT0=0;
-	*/
-	TCCR0A = 1<<WGM01; //CTC mode
-	TCCR0B = (1<<CS00); //no clock scaling
-	OCR0A=100; //set high
-	TCNT0=0;
-	
-	TCCR0A = 1<<WGM01|(1<<COM0A1)|(1<<COM0A0); //CTC mode, set high
-	TCCR0B |= 1<<FOC0A; //force high
-	TCNT1 = 0x00; //zero timer count
-	
-	
-	
-	
-	DDRB=0xff;
-	
-	
-/*
-	while(1){
-		
-		asm volatile ("nop");
-		asm volatile ("nop");
-		asm volatile ("nop");
-		asm volatile ("nop");
-		asm volatile ("nop");
-		asm volatile ("nop");
-		asm volatile ("nop");
-		asm volatile ("nop");
-		asm volatile ("nop");
-		asm volatile ("nop");
-	}
-*/
-#endif
-	
+
+
 }
 
 /* controls whether to display odd scanlines  */
 void vga_fast()
+
 {
+	cli();
 	vidptr = vidskippy;
+	sei();
 }
 
 void vga_slow()
 {
+	cli();
 	vidptr = vidfull;
+	sei();
 }
-
-
-void vga_mode(char x){
-	
-	if (x==VGA_512)	
-		hires=1;
-		
-	else if (x==VGA_256)
-		hires=0;
-	
-}
-
-//Graphics commands for VGA_256
 
 void clearscreen(char color)
 {
 	
 	unsigned char i;
 	unsigned char j;
-		
+	
 	START_FAST_WRITE;
 	for(j=0;j<240;j++) {
 		SELECT_RAM_PAGE(j);
-		for (i=0;;i++) {
+		
+		for (i=0;i++;) {
 			FAST_WRITE( i, color );
+			
 			if (i==255)
 				break;
 		}
@@ -310,9 +162,9 @@ void drawsprite(unsigned char x, unsigned char y, unsigned char* sprite, unsigne
 }
 
 //extern volatile unsigned char framecount;
- volatile unsigned char vscroll = 0;
+volatile unsigned char vscroll = 0;
 volatile unsigned char hscroll = 0;
- volatile unsigned char vcnt=220;
+volatile unsigned char vcnt=240;
 
 //these not to be used outside vga
 unsigned char drawrow=0;  //row to draw
@@ -329,32 +181,43 @@ void vga_delay(unsigned char frames)
 		return;
 	
 	while (framecount != end);
-	
-	
+		
 }
 
-//keyboard
+//virtual console for text
+#define MAXX  (256-8)
+#define MAXY  (240)
 
-volatile unsigned char keybuffer[ 0x10 ];
-volatile unsigned char keyreadpos;
-volatile unsigned char keywritepos;
+static uchar cx=0;
+static uchar cy=0;
+#define FONT_HEIGHT 8
+#define FONT_WIDTH	8
 
-
-
-
-uchar key_getcode(chardevice_t* dev)
+void vga_putc(chardevice_t* dev, unsigned char c)
 {
-	unsigned char c;
-	while (keyreadpos == keywritepos); //wait   while empty
-	c = keybuffer[keyreadpos];
-	keyreadpos = (keyreadpos+1) & 0xF;
-	return c;
+
+	if (c=='\n'){
+		drawchar(cx, cy, '$', WHITE, BLACK);
+		cx=0;
+		cy+= FONT_HEIGHT;
+	} else {
+		drawchar(cx, cy, c, WHITE, BLACK);
+		cx+=7;  //try slender font
+	}
+	
+	if (cx >= MAXX){
+		cx=0;
+		cy+=FONT_HEIGHT;
+	}
+	
+	if (  ((unsigned char)(cy- vscroll)   )>= (unsigned char)MAXY){
+		int j;		
+		vscroll +=8; //scroll smoothly (instead of 8)
+		for (j=cx;j<MAXX;j++)
+			drawchar(j, cy, ' ', WHITE, BLACK);
+	}
+	drawchar(cx, cy, '_', WHITE, BLACK);
 }
 
-unsigned char key_kbhit(chardevice_t* dev)
-{
-	return (keyreadpos != keywritepos);
-}
-
-//create the chardevice
-chardevice_t dev_keyraw = {{NULL, DEV_FLAG_UNINIT}, NULL, key_getcode, key_kbhit };
+chardevice_t dev_scr = {{NULL, 0}, vga_putc, NULL, NULL };
+	

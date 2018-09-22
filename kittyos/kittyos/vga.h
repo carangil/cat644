@@ -9,7 +9,9 @@
 #ifndef VGA_H_
 #define VGA_H_
 
+
 #include "avrstuff.h"
+#include "drivers.h"
 #include "vgadefs.h"
 
 
@@ -67,5 +69,9 @@ extern volatile unsigned char hscroll;
 extern volatile unsigned char keybuffer[16];
 extern volatile unsigned char keyreadpos;
 extern volatile unsigned char keywritepos;
+
+
+extern chardevice_t dev_scr;
+
 
 #endif /* VGA_H_ */

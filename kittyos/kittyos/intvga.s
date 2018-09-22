@@ -1,15 +1,17 @@
 
+
 /*
  * intvga.s
  *
  * Created: 9/4/2018 8:39:13 PM
  *  Author: mark
  */ 
+#define ASM
 #include <avr/io.h>
 #include "xram.h"
 #include "vgadefs.h"
 
-
+#ifdef VGA_NOTCHY
 //#define DEBUGCOUNTING
 #define VGAKEYPOLL
 
@@ -499,7 +501,8 @@ vidfull:  //starts at 34
 						cbi io(RAMCTRL_PORT), RAMCTRL_PL_BITNUM //latch low			
 
 						lds zh, hscroll			//start value for x		
-						out RAMADDR_PORT, zh	//output first pixel address
+						//out RAMADDR_PORT, zh	//output first pixel address
+						out io(RAMADDR_PORT), zh
 						
 			
 						cbi io(VGA_DAC_PORT), VGA_DAC_BITNUM  //dac on  //first pixel (0)  clk 86 This instruction takes 2 clocks, but 1st clock is R, second is write
@@ -611,3 +614,5 @@ videxit:
 
 todops2:
 	jmp fardops2
+
+#endif

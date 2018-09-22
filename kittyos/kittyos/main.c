@@ -8,13 +8,13 @@
 #include "kittyos.h"
 #include "comm.h"
 #include "vga.h"
+#include "keyps2.h"
 
 
 //way to output messages to console
-#define CONFIG_DMESG_SIZE	32
+
 char dmesg_buf[CONFIG_DMESG_SIZE];
-#define DMESGF(...) { snprintf(dmesg_buf, sizeof(dmesg_buf), __VA_ARGS__ ); prints(dev_dmesg, dmesg_buf);}
-#define DMESG(x) prints(dev_dmesg, x)
+
 chardevice_t* dev_dmesg = NULL;
 
 //simple i/o
@@ -99,8 +99,11 @@ int main(void)
 
     
 	vga_init();
-	 
 	sei();
+	
+	dev_keyraw.dev.ioctl(&dev_keyraw, IOCTL_ENABLE, 1);
+
+	
 	//  vga_slow();
 	 //..SELECT_RAM_PAGE(0x123);
 	 //SELECT_RAM_BANK(0);
@@ -159,8 +162,13 @@ int main(void)
    	environment_t env;  	
    	//env.cmdline= " testing";
    	env.in = &dev_ser0;
-   	env.out = &dev_ser0;
-	env.key = &dev_keyraw;
+   	//env.out = &dev_ser0;
+	env.out = &dev_scr;
+//	env.key = &dev_keyraw;
+	env.key = &dev_keychar;
+	
+	clearscreen(BLACK);
+	
 	DMESG("Start user program\n");
     DMESGF("Prog returned %d\nHLT\n", test_main(&env));
          

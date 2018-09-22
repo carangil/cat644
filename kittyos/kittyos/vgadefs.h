@@ -9,6 +9,11 @@
 #ifndef VGADEFS_H_
 #define VGADEFS_H_
 
+//choose VGA driver algorithm:
+//#define VGA_NOTCHY  //will blank out parts of a scanline to handle a key
+#define VGA_SPAGHETTI  //handles the keyboard inside of vertical blanking by withhold cycles from the user program.  Longer than usual interrupts.
+
+
 
 #define VGA_DDR			DDRD
 #define VGA_DDR_MASK	0b00110100 /*three outputs*/
