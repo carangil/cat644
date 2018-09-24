@@ -25,4 +25,19 @@ void prints(chardevice_t* dev, char* s);
 uint16_t reads( chardevice_t* dev, char* str, uint16_t buffersize, unsigned char echo);
 
 extern chardevice_t dev_keyraw;
+
+
+
+
+
+
+
+
+
+#define CONFIG_DMESG_SIZE	32
+extern char dmesg_buf[CONFIG_DMESG_SIZE];
+#define DMESGF(...) { snprintf(dmesg_buf, sizeof(dmesg_buf), __VA_ARGS__ ); prints(dev_dmesg, dmesg_buf);}
+#define DMESG(x) prints(dev_dmesg, x)
+extern chardevice_t* dev_dmesg;
+
 #endif /* KITTYOS_H_ */
