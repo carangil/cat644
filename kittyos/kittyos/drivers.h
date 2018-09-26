@@ -15,12 +15,12 @@
 //device flag
 #define DEV_FLAG_ERR	1
 #define DEV_FLAG_UNINIT	2
-#define DEV_FLAG_PUSHBACK	4
+#define DEV_FLAG_PUSHBACK	4  
 
-typedef  struct device_s* devid;
+
 
 typedef struct device_s {
-	uchar (*ioctl)(devid dev, uchar ctlnum, uint16_t param);
+	uchar (*ioctl)(struct device_s* dev, uchar ctlnum, uint16_t param);
 	uchar flags;
 } device_t;
 
@@ -54,6 +54,10 @@ typedef struct exedevice_s{
 
 
 #define IOCTL_ENABLE 3
+
+#define IOCTL_UNLOCK 4
+#define IOCTL_LOCK 5
+#define IOCTL_INIT 6
 
 
 #endif /* DRIVERS_H_ */

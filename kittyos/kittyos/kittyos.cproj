@@ -170,6 +170,18 @@
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="sdcard.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sdcard.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="spi.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="spi.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="test.c">
       <SubType>compile</SubType>
     </Compile>

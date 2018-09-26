@@ -9,6 +9,9 @@
 #include "comm.h"
 #include "vga.h"
 #include "keyps2.h"
+#include "spi.h"
+#include "sdcard.h"
+
 
 
 //way to output messages to console
@@ -71,7 +74,7 @@ uint16_t reads( chardevice_t* dev, char* str, uint16_t buffersize, unsigned char
 
 int main(void)
 {	
-	static char buf[50];
+//	static char buf[50];
 	
 	
    	/* Disable JTAG port to get full access on PORTC*/
@@ -100,8 +103,22 @@ int main(void)
     
 	vga_init();
 	sei();
+		
 	
-	dev_keyraw.dev.ioctl(&dev_keyraw, IOCTL_ENABLE, 1);
+	//dev_spi0.chardev.dev.ioctl(&dev_spi0.chardev.dev, IOCTL_LOCK, SPI_MASTER | SPI_CLK_8 );
+	
+	{
+		unsigned long cap;
+		sdcard_init(&cap);
+		DMESGF("SD:%ld\n", cap);
+	}
+	
+	
+	
+	//dev_spi0.chardev.write1(NULL, 'A');
+	//while(1);
+	
+	dev_keyraw.dev.ioctl(&dev_keyraw.dev, IOCTL_ENABLE, 1);
 
 	
 	//  vga_slow();

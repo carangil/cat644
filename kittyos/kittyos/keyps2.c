@@ -11,7 +11,7 @@ volatile unsigned char keywritepos=0;
 extern chardevice_t dev_keyraw;
 
 
-uchar key_ioctl(devid dev, uchar ctlnum, uint16_t param)
+uchar key_ioctl(device_t* dev, uchar ctlnum, uint16_t param)
 {
 	
 	if (ctlnum == IOCTL_ENABLE) {
@@ -48,13 +48,13 @@ chardevice_t dev_keyraw = {{key_ioctl, DEV_FLAG_UNINIT}, NULL, key_getcode, key_
 //translation into characters
 //xtab must be in prog memory
 
-char xlat(unsigned char* xtab, unsigned char code)
+char xlat(const unsigned char* xtab, unsigned char code)
 {
 
 	unsigned char i;
 	unsigned char j;
 	
-	for (i=0; j = pgm_read_byte(xtab +i +1); i+=2)
+	for (i=0; (j = pgm_read_byte(xtab +i +1)); i+=2)
 	{
 		if (code == j)
 		{

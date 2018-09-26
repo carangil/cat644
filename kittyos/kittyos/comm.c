@@ -41,7 +41,7 @@ void comm_init_115200()
 
 
 
-uchar comm_ioctl(devid dev, uchar ctlnum, uint16_t param)
+uchar comm_ioctl(device_t* dev, uchar ctlnum, uint16_t param)
 {
 	if (ctlnum == IOCTL_BAUD) {
 		
