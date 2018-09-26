@@ -39,9 +39,21 @@
 #define SPI_CPHA0   SPCR &= ~( _BV(CPHA));
 
 void spi_init(unsigned int settings);
-void spi_disable();
-void spi_enable();
-uchar spi_inout(uchar val);
+//void spi_disable();
+//void spi_enable();
 
+
+
+typedef struct {
+	chardevice_t chardev;
+	uchar state;
+	uchar locked;
+} spi_device_t;
+
+#define SPI_STATE_IDLE 0
+#define SPI_STATE_EXCHANGING 1
+
+
+extern spi_device_t dev_spi0;
 
 #endif /* SPI_H_ */
