@@ -1,8 +1,9 @@
 
 /*
- *  FAST 16 Interpreter
+ * Assembly1.s
  *
- *  Mark Sherman
+ * Created: 5/19/2014 10:33:54 PM
+ *  Author: mark
  */ 
 
 
@@ -494,39 +495,13 @@ global_label(vm_sta_d)
 
 
 
-//sub_r is already optimization for swp and sub, so the extra jump isn't bad
-global_label(vm_subr_b)
-	rjmp h_subr_b
-	
-global_label(vm_subr_c)
-	rjmp h_subr_c
-	
-global_label(vm_subr_d)
-	rjmp h_subr_d
-
 
 //placeholder for function table for slower instructions where the extra jump doesn't matter
 	
-global_label(vm_mul_b)
-rjmp tablefunc
-global_label(vm_mul_c)
-rjmp tablefunc
-global_label(vm_mul_d)
-rjmp tablefunc
-global_label(vm_div_b)
-rjmp tablefunc
-global_label(vm_div_c)
-rjmp tablefunc
-global_label(vm_div_d)
-rjmp tablefunc
-global_label(vm_mod_b)
-rjmp tablefunc
-global_label(vm_mod_c)
-rjmp tablefunc
-global_label(vm_mod_d)
-rjmp tablefunc
 
 
+global_label(vm_extension)
+rjmp tablefunc
 
 //last handler only has to begin in this page.. it can be outside
 global_label(instrlast)
@@ -567,7 +542,7 @@ interpreter:
 
    movw IPL, r24    //first arg in 24/25, and contains the start place for interpreter code
    movw VSPL, r22   //second arg in 22/33, and contains the 
-   movw OFFSETL, r20 //3rd arg is the offset for prog memory access (program can add SEG to any address)
+   movw OFFSETL, r20 //3rd arg is the offset for prog memory access (program can add SEG to any address) (not used yet)
 
    SETZH
    DISPATCHLD	

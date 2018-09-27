@@ -72,6 +72,12 @@ uint16_t reads( chardevice_t* dev, char* str, uint16_t buffersize, unsigned char
 //configure serial port
 #define CONFIG_SER0_BAUD	9600
 
+extern instr0();
+
+
+unsigned char vstack[100];
+extern char program[];
+
 int main(void)
 {	
 //	static char buf[50];
@@ -104,14 +110,18 @@ int main(void)
 	vga_init();
 	sei();
 		
+		
+	DMESGF("instr0:%x", (unsigned int) instr0);	
+	
+	interpreter(program, vstack + sizeof(vstack), NULL);
 	
 	//dev_spi0.chardev.dev.ioctl(&dev_spi0.chardev.dev, IOCTL_LOCK, SPI_MASTER | SPI_CLK_8 );
 	
-	{
-		unsigned long cap;
-		sdcard_init(&cap);
-		DMESGF("SD:%ld\n", cap);
-	}
+	//{
+		//unsigned long cap;
+		//sdcard_init(&cap);
+		//DMESGF("SD:%ld\n", cap);
+	//}
 	
 	
 	
