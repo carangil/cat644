@@ -508,14 +508,17 @@ global_label(instrlast)
 global_label(vm_syscall)
 
 	
+	ld r22, IP+  //fetch syscall number   (2nd arg to C function)
+	
 	push XH
 	push XL
 	
-	
 	clr r1 //gcc uses r1 as always 0
 
-	//register AH:AL is already in the 1st 16-bit slot for a C function
-	movw  22, BL  //set up B as the second argument
+	//register AH:AL is already in the 1st 16-bit slot for a C function; this will be arg0 (1st arg to c function)
+
+	movw  r20, BL  //set up B as 2nd syscall org (3rs to C cfunction)
+
 
 	call syscall	//return value is already in register 'A'
 

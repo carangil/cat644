@@ -160,6 +160,9 @@
     <Compile Include="intsyscall.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="intsyscalls.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="intvga-bad.s">
       <SubType>compile</SubType>
     </Compile>

@@ -11,6 +11,7 @@ typedef struct instr_s{
 	unsigned int opcode; //the instruction opcode
 	int databytes;  //0, 1 or 2
 	int relative;  //1 if databyte is relative address
+	int pseudo;  //no real opcode
 } instr_t;
 
 #define MAX_INST 255
@@ -131,6 +132,7 @@ int scanline(FILE* f, char* linebuf, int bufsiz){
 	char c=0;
 	char last = 0;
 	int comment = 0;
+	int instring = 0;
 
 	while (1) {
 		last = c;
@@ -167,9 +169,13 @@ int scanline(FILE* f, char* linebuf, int bufsiz){
 			continue;
 
 
-		if (pos > 0 && isspace(last) && !(isdigit(c) || c == '@' || c == '$' || c=='#')) {
-			linebuf[pos - 1] = '_';
+		if (pos > 0 && isspace(last) && !(isdigit(c) || c == '@' || c == '$' || c=='#' || c == '\'')) {
+			if (!instring)
+				linebuf[pos - 1] = '_';
 		}
+
+		if (c == '\'')
+			instring = 1;
 
 		if (pos < bufsiz)
 			linebuf[pos++] = c;
@@ -221,6 +227,7 @@ label_t*  addlabel(label_t* labs, char* name, int offset) {
 	return lab;  //return the new head of the list
 }
 
+instr_t* in_string = NULL;
 
 //returns the program buffer
 void assemble(char* input_file, char* output_file, int format)
@@ -289,15 +296,26 @@ void assemble(char* input_file, char* output_file, int format)
 			p++;
 		}
 		
+	
+
 		in = find_instruction(linebuf, 0);
 		if (in) {
 
 			printf(" {%s}\n ", in->name);
-			progbuf[pos] = in->opcode;
 
-			pos++;
+			if (!in->pseudo) {
+				progbuf[pos] = in->opcode;
+				pos++;
+			}
 
-			if (in->databytes) {
+			if (in == in_string) {
+
+				p++;//skip over '
+				while(*p)
+					progbuf[pos++] = (*(p++)) & 0xff;
+
+			} 
+			else if (in->databytes) {
 				if (!p || !*p) {
 					printf(" Operand required for %s\n", linebuf);
 					exit(1);
@@ -534,6 +552,20 @@ int main(int argc, char ** args)
 	instr->databytes = 2;
 	instr->relative = 1;
 
+	instr = find_instruction("syscall", 1);
+	instr->databytes = 1;
+
+
+	instr = find_instruction("byte", 1);
+	instr->databytes = 1;
+	instr->pseudo = 1;
+
+	instr = find_instruction("word", 1);
+	instr->databytes = 2;
+	instr->pseudo = 1;
+
+	in_string = find_instruction("string", 1);
+	in_string->pseudo = 1;
 
 
 #endif 
@@ -551,7 +583,7 @@ int main(int argc, char ** args)
 			instructions[i].databytes,
 			instructions[i].relative);
 
-		if (instructions[i].opcode == 0) {
+		if ((instructions[i].opcode == 0) && (instructions[i].pseudo ==0)) {
 			printf("Critical error instruction with no jumpcode entry\n");
 			exit(1);
 

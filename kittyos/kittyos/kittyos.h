@@ -21,6 +21,8 @@ typedef struct environment_s {
 }environment_t;
 
 
+device_t* findDevice(char* name);
+
 void prints(chardevice_t* dev, char* s);
 uint16_t reads( chardevice_t* dev, char* str, uint16_t buffersize, unsigned char echo);
 

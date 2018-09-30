@@ -6,7 +6,10 @@
  */ 
 #ifndef DRIVERS_H_
 #define DRIVERS_H_
+
+#ifndef PCTEST
 #include "avrstuff.h"
+#endif
 
 //return values for calls
 #define SUCCESS		0
@@ -39,6 +42,7 @@ typedef struct blockdevice_s {
 	device_t dev;
 	uchar (*readblock)(struct blockdevice_s *dev, blocknum block,  char * data, int numbytes);
 	uchar (*writeblock)(struct blockdevice_s *dev, blocknum block, char * data, int numbytes);
+	blocknum count; //number of blocks
 } blockdevice_t;
 
 //possible ioctls so far
@@ -58,6 +62,25 @@ typedef struct exedevice_s{
 #define IOCTL_UNLOCK 4
 #define IOCTL_LOCK 5
 #define IOCTL_INIT 6
+
+
+#define DEVICE_BASE		0
+#define DEVICE_CHAR		1
+#define DEVICE_BLOCK	2
+#define DEVICE_MUX		3
+
+typedef struct deviceinfo_s{
+	char name[29];
+	uchar devtype;
+	uint16_t selector;
+}deviceinfo_t;
+
+typedef struct muxdevice_s {
+	device_t dev;
+	device_t* (*select)(struct muxdevice_s* mux, uint16_t subdevice);			//selects subdevice by number
+	uchar (*first)(struct muxdevice_s* mux, deviceinfo_t* info);
+	uchar (*next)(struct muxdevice_s* mux, deviceinfo_t* info);
+} muxdevice_t;
 
 
 #endif /* DRIVERS_H_ */

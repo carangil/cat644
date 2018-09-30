@@ -22,7 +22,7 @@ void vga_init()
 {
 
 
-
+	dev_scr.dev.flags=0;
 
 	//vidptr = vidfull;
 	vidptr = vidskippy;
@@ -84,12 +84,13 @@ void clearscreen(char color)
 	
 	unsigned char i;
 	unsigned char j;
+	SETA16LOW;
 	
 	START_FAST_WRITE;
 	for(j=0;j<240;j++) {
 		SELECT_RAM_PAGE(j);
 		
-		for (i=0;i++;) {
+		for (i=0;;i++) {
 			FAST_WRITE( i, color );
 			
 			if (i==255)
@@ -109,6 +110,7 @@ void drawchar(unsigned char x, unsigned char y, unsigned char c, unsigned char c
 	unsigned char code;
 	
 	i = ((unsigned int)c)*8;
+	SETA16LOW;
 	
 	START_FAST_WRITE;
 	
@@ -143,7 +145,7 @@ void drawsprite(unsigned char x, unsigned char y, unsigned char* sprite, unsigne
 {
 	unsigned char a;
 	unsigned char ystop = height+y;
-
+	SETA16LOW;
 	
 	START_FAST_WRITE;
 	
@@ -197,7 +199,7 @@ void vga_putc(chardevice_t* dev, unsigned char c)
 {
 
 	if (c=='\n'){
-		drawchar(cx, cy, '$', WHITE, BLACK);
+		drawchar(cx, cy, 0x16, WHITE, BLACK);
 		cx=0;
 		cy+= FONT_HEIGHT;
 	} else {
@@ -219,5 +221,5 @@ void vga_putc(chardevice_t* dev, unsigned char c)
 	drawchar(cx, cy, '_', WHITE, BLACK);
 }
 
-chardevice_t dev_scr = {{NULL, 0}, vga_putc, NULL, NULL };
+chardevice_t dev_scr = {{NULL, DEV_FLAG_UNINIT}, vga_putc, NULL, NULL };
 	

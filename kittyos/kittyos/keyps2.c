@@ -10,6 +10,11 @@ volatile unsigned char keywritepos=0;
 
 extern chardevice_t dev_keyraw;
 
+//disable debug messages from this driver
+#undef DMESG
+#undef DMESGF
+#define DMESG(x) 
+#define DMESGF(...)
 
 uchar key_ioctl(device_t* dev, uchar ctlnum, uint16_t param)
 {

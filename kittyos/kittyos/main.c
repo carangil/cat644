@@ -67,6 +67,61 @@ uint16_t reads( chardevice_t* dev, char* str, uint16_t buffersize, unsigned char
 	return cnt;
 }
 
+//The main system mux, which lets the user select all other devices
+//also tests the mux enumerate & select subdevice concept, which will be used later to build directories on disk
+char* devlistnames[]={"ser0", "spi0", "ps2", "key", "scr",  NULL};	
+device_t* devlist []={&dev_ser0.dev, &dev_spi0.chardev.dev, &dev_keyraw.dev, &dev_keychar.dev, &dev_scr.dev };
+uchar devtypes[] = { DEVICE_CHAR, DEVICE_CHAR, DEVICE_CHAR, DEVICE_CHAR, DEVICE_CHAR};
+
+device_t* main_select(muxdevice_t* mux, uint16_t subdevice){
+	return devlist[subdevice];	
+}
+
+uchar main_next(muxdevice_t* mux, deviceinfo_t* info){
+	info->selector++;
+	if (devlistnames[info->selector] == NULL)
+		return 0;  //no more devices
+	
+	strncpy(&info->name, devlistnames[info->selector], sizeof(info->name));
+	info->devtype = devtypes[info->selector];
+	return 1; //got a device
+}
+
+uchar main_first(muxdevice_t* mux, deviceinfo_t* info){
+	info->selector=0xffff;
+	return main_next(mux,info);
+	
+}
+
+uchar (*next)(struct muxdevice_s* mux, deviceinfo_t* info);
+
+muxdevice_t mainmux = { {NULL,0}, main_select, main_first, main_next};
+	
+	
+//findDevice helper function
+//takes a name and find it in the main mux
+
+
+device_t * findDevice(char* name){
+	
+	muxdevice_t* m = &mainmux;
+	deviceinfo_t info;
+	deviceinfo_t di;
+	
+	if ( m->first(m, &di) ){
+		
+		do {
+			if (!strcmp(di.name, name)) {
+				return m->select(m, di.selector);
+			}
+			
+		} while (m->next(m, &di));
+	
+	}
+	
+	return NULL;
+}
+
 
 
 //configure serial port
@@ -97,21 +152,55 @@ int main(void)
 
   
    if (SUCCESS == dev_ser0.dev.ioctl(&dev_ser0.dev, IOCTL_BAUD, CONFIG_SER0_BAUD)) {
-	   
 	   // if we initalized serial port, that becomes the output console
 	   dev_dmesg = &dev_ser0;
-	   DMESGF("SER0 at %d C=ff!\n", CONFIG_SER0_BAUD);
+	   DMESGF("SER0 at %d\n", CONFIG_SER0_BAUD);
    }
      //try outputing on a port
 
-	xram_init();
-
-    
+	xram_init();  
 	vga_init();
 	sei();
 		
+	//switch output to screen, using the device syscall
+	
+	dev_dmesg = findDevice("scr");
+
+	
+	clearscreen(GREEN);
+	dev_keyraw.dev.ioctl(&dev_keyraw.dev, IOCTL_ENABLE, 1);
+
+
+	
+
+	DMESG("Debug to screen.");
+	
+	
+	DMESGF("instr0:%x\n", (unsigned int) instr0);	
+	
+	{
+		deviceinfo_t di;
+		if ( mainmux.first(&mainmux, &di) ){
+			
+			do {
+				DMESGF("DEVICE %s=T%x S%x,\n", di.name, di.devtype, di.selector);
+			} while (mainmux.next(&mainmux, &di));
+		}
 		
-	DMESGF("instr0:%x", (unsigned int) instr0);	
+		
+		
+	}
+	DMESG("--\n");
+	
+	   	environment_t env;
+	   	env.in = &dev_keychar;
+	   	env.out = &dev_scr;
+	   	//env.cmdline= " testing";
+	   	//env.in = &dev_ser0;
+	   	//env.out = &dev_ser0;
+
+
+	
 	
 	interpreter(program, vstack + sizeof(vstack), NULL);
 	
@@ -128,7 +217,7 @@ int main(void)
 	//dev_spi0.chardev.write1(NULL, 'A');
 	//while(1);
 	
-	dev_keyraw.dev.ioctl(&dev_keyraw.dev, IOCTL_ENABLE, 1);
+
 
 	
 	//  vga_slow();
@@ -139,67 +228,9 @@ int main(void)
 	 drawchar(0,0,'x',RED,BLUE);;
 	 drawchar(256-8,200,'y',RED,BLUE);
 	 drawchar(256-16,100,'a',RED,BLUE);
-	 /*
-	 
-	   while(1){
-		  	asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-			  asm volatile ("nop");
-		   
-	   }
-	*/
-	
-   	environment_t env;  	
-   	//env.cmdline= " testing";
-   	env.in = &dev_ser0;
-   	//env.out = &dev_ser0;
-	env.out = &dev_scr;
-//	env.key = &dev_keyraw;
-	env.key = &dev_keychar;
-	
-	clearscreen(BLACK);
-	
+		
 	DMESG("Start user program\n");
     DMESGF("Prog returned %d\nHLT\n", test_main(&env));
-         
-		 
 		
    vga_fast();
    

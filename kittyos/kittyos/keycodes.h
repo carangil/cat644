@@ -19,12 +19,11 @@ extern unsigned const char ktab_eo[] PROGMEM;
 
 
 
-#define K_UP	30
-#define K_DOWN	31
-#define K_LEFT	17
-#define K_RIGHT 16
-
-#define K_BACKSPACE 9
+#define K_UP	0x18
+#define K_DOWN	0x19
+#define K_LEFT	0x1b
+#define K_RIGHT 0x1a
+#define K_BACKSPACE 8
 #define K_ESC	27
 
 #endif /* KEYCODES_H_ */
