@@ -6,15 +6,15 @@
 volatile int x;
 volatile char xc;
 
-uchar staticheap[1024*2];
+uchar staticheap[1024*3];
 
 unsigned int syscall(unsigned int arg0, unsigned char callnum, unsigned int arg1)
 {
 	chardevice_t* cdev;
 	
-	DMESGF("SYSCALL %x arg0 %x  arg1 %x\n", (unsigned int) callnum, arg0, arg1);
+//	DMESGF("SYSCALL %x arg0 %x  arg1 %x\n", (unsigned int) callnum, arg0, arg1);
 	
-	#if 0	
+	#if 1
 	
 		switch (callnum){
 			
@@ -40,8 +40,7 @@ unsigned int syscall(unsigned int arg0, unsigned char callnum, unsigned int arg1
 		}
 	#endif
 
-	
-	
+		
 	return arg0;  //always return register A, unless other value is wanted
 }
 

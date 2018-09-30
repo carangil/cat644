@@ -157,6 +157,7 @@ global_label(vm_sub_d)
 	DISPATCHLD
 	DISPATCHJ
 
+	
 
 //and
 global_label(vm_and_b)
@@ -235,6 +236,11 @@ global_label(vm_bswap)
 	DISPATCHJ
 
 
+	
+global_label(vm_jaz)   //jump if a contains zero (doesn't require subtract or other operation beforehand)
+	mov r0, AL
+	or  r0, AH
+	
 global_label(vm_jz)  //jump if last result was zero (from subtract, etc)
 	breq vm_jmpr
 	rjmp skipjump
@@ -254,6 +260,8 @@ global_label(vm_jb)  //jump if below
 global_label(vm_jae)  //jump if above or equal (unsigned)
 	brsh vm_jmpr
 	rjmp skipjump
+
+
 
 
 global_label(vm_call_d) //call 'd' (not relatively)
@@ -495,6 +503,11 @@ global_label(vm_sta_d)
 
 
 
+global_label(vm_offset) 
+	add AL, OFFSETL
+	adc AH, OFFSETH
+	DISPATCHLD
+	DISPATCHJ
 
 //placeholder for function table for slower instructions where the extra jump doesn't matter
 	
@@ -545,7 +558,7 @@ interpreter:
 
    movw IPL, r24    //first arg in 24/25, and contains the start place for interpreter code
    movw VSPL, r22   //second arg in 22/33, and contains the 
-   movw OFFSETL, r20 //3rd arg is the offset for prog memory access (program can add SEG to any address) (not used yet)
+   movw OFFSETL, r24 //OFFSET is the starting address of this code. its for any static variables (strings) contained inside
 
    SETZH
    DISPATCHLD	

@@ -124,6 +124,7 @@ device_t * findDevice(char* name){
 
 
 
+
 //configure serial port
 #define CONFIG_SER0_BAUD	9600
 
@@ -147,37 +148,38 @@ int main(void)
  
    //initialize serial port
   
-   DMESG("Kernel start\n");  //testing that unitialized console does nothing bad
+   DMESG("Kernel start\r\n");  //testing that unitialized console does nothing bad
   
 
   
    if (SUCCESS == dev_ser0.dev.ioctl(&dev_ser0.dev, IOCTL_BAUD, CONFIG_SER0_BAUD)) {
 	   // if we initalized serial port, that becomes the output console
 	   dev_dmesg = &dev_ser0;
-	   DMESGF("SER0 at %d\n", CONFIG_SER0_BAUD);
+	   DMESGF("DMESG=SER0 at %d\r\n", CONFIG_SER0_BAUD);
    }
-     //try outputing on a port
+     
+	DMESG("Hello in Kernel.\r\n");
+	
+	DMESGF("instr0:%x\r\n", (unsigned int) instr0);	
 
 	xram_init();  
 	vga_init();
 	sei();
 		
 	//switch output to screen, using the device syscall
-	
+	DMESG("Attempt to find 'scr'\r\n");
 	dev_dmesg = findDevice("scr");
 
 	
 	clearscreen(GREEN);
 	dev_keyraw.dev.ioctl(&dev_keyraw.dev, IOCTL_ENABLE, 1);
 
+	DMESG("DMESG=scr\n");
+	
+	
 
 	
-
-	DMESG("Debug to screen.");
-	
-	
-	DMESGF("instr0:%x\n", (unsigned int) instr0);	
-	
+	#if 1
 	{
 		deviceinfo_t di;
 		if ( mainmux.first(&mainmux, &di) ){
@@ -190,8 +192,9 @@ int main(void)
 		
 		
 	}
-	DMESG("--\n");
 	
+	DMESG("--\n");
+	#endif
 	   	environment_t env;
 	   	env.in = &dev_keychar;
 	   	env.out = &dev_scr;
@@ -201,7 +204,8 @@ int main(void)
 
 
 	
-	
+	//interpreter never returns
+	DMESGF("Start FAST16:$%x\n", (unsigned int) program);
 	interpreter(program, vstack + sizeof(vstack), NULL);
 	
 	//dev_spi0.chardev.dev.ioctl(&dev_spi0.chardev.dev, IOCTL_LOCK, SPI_MASTER | SPI_CLK_8 );
@@ -217,23 +221,8 @@ int main(void)
 	//dev_spi0.chardev.write1(NULL, 'A');
 	//while(1);
 	
-
-
-	
-	//  vga_slow();
-	 //..SELECT_RAM_PAGE(0x123);
-	 //SELECT_RAM_BANK(0);
 	 
-	 clearscreen(GREEN);
-	 drawchar(0,0,'x',RED,BLUE);;
-	 drawchar(256-8,200,'y',RED,BLUE);
-	 drawchar(256-16,100,'a',RED,BLUE);
-		
-	DMESG("Start user program\n");
-    DMESGF("Prog returned %d\nHLT\n", test_main(&env));
-		
-   vga_fast();
-   
+
    while(1){
 	   
 	   vscroll++;

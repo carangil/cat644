@@ -528,6 +528,10 @@ int main(int argc, char ** args)
 	instr->databytes = 2;
 	instr->relative = 1;
 
+	instr = find_instruction("jaz", 1);
+	instr->databytes = 2;
+	instr->relative = 1;
+
 
 	instr = find_instruction("jnz", 1);
 	instr->databytes = 2;
