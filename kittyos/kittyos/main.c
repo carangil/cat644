@@ -131,6 +131,7 @@ device_t * findDevice(char* name){
 extern instr0();
 
 
+
 unsigned char vstack[100];
 extern char program[];
 
@@ -138,6 +139,7 @@ int main(void)
 {	
 //	static char buf[50];
 	
+
 	
    	/* Disable JTAG port to get full access on PORTC*/
    	MCUCR |= _BV(JTD);
@@ -174,9 +176,8 @@ int main(void)
 	clearscreen(GREEN);
 	dev_keyraw.dev.ioctl(&dev_keyraw.dev, IOCTL_ENABLE, 1);
 
-	DMESG("DMESG=scr\n");
-	
-	
+	DMESG("DMESG=scr\r\n");
+	DMESG("VER 0.2 "  __DATE__ " " __TIME__  " \r\n");
 
 	
 	#if 1
@@ -188,8 +189,7 @@ int main(void)
 				DMESGF("DEVICE %s=T%x S%x,\n", di.name, di.devtype, di.selector);
 			} while (mainmux.next(&mainmux, &di));
 		}
-		
-		
+				
 		
 	}
 	
@@ -205,7 +205,7 @@ int main(void)
 
 	
 	//interpreter never returns
-	DMESGF("Start FAST16:$%x\n", (unsigned int) program);
+	DMESGF("Start 16:$%x\n", (unsigned int) program);
 	interpreter(program, vstack + sizeof(vstack), NULL);
 	
 	//dev_spi0.chardev.dev.ioctl(&dev_spi0.chardev.dev, IOCTL_LOCK, SPI_MASTER | SPI_CLK_8 );

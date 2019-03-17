@@ -24,8 +24,8 @@ void vga_init()
 
 	dev_scr.dev.flags=0;
 
-	//vidptr = vidfull;
-	vidptr = vidskippy;
+	vidptr = vidfull;
+	//vidptr = vidskippy;
 
 	
 	
@@ -141,6 +141,7 @@ void drawchar(unsigned char x, unsigned char y, unsigned char c, unsigned char c
 	END_FAST_WRITE;
 }
 
+
 void drawsprite(unsigned char x, unsigned char y, unsigned char* sprite, unsigned char width, unsigned char height)
 {
 	unsigned char a;
@@ -187,7 +188,7 @@ void vga_delay(unsigned char frames)
 }
 
 //virtual console for text
-#define MAXX  (256-8)
+#define MAXX  (256-8-6)
 #define MAXY  (240)
 
 static uchar cx=0;
@@ -204,7 +205,7 @@ void vga_putc(chardevice_t* dev, unsigned char c)
 		cy+= FONT_HEIGHT;
 	} else {
 		drawchar(cx, cy, c, WHITE, BLACK);
-		cx+=7;  //try slender font
+		cx+=6;  //try slender font
 	}
 	
 	if (cx >= MAXX){
@@ -214,9 +215,11 @@ void vga_putc(chardevice_t* dev, unsigned char c)
 	
 	if (  ((unsigned char)(cy- vscroll)   )>= (unsigned char)MAXY){
 		int j;		
-		vscroll +=8; //scroll smoothly (instead of 8)
+		
 		for (j=cx;j<MAXX;j++)
 			drawchar(j, cy, ' ', WHITE, BLACK);
+			
+		vscroll +=8; 
 	}
 	drawchar(cx, cy, '_', WHITE, BLACK);
 }
