@@ -10,6 +10,7 @@
 #define KITTYOS_H_
 #include "drivers.h"
 #include "xram.h"
+#include "mmalloc.h"
 
 typedef struct environment_s {
 	chardevice_t* in;
@@ -36,7 +37,7 @@ extern chardevice_t dev_keyraw;
 
 
 
-#define CONFIG_DMESG_SIZE	32
+#define CONFIG_DMESG_SIZE	512
 extern char dmesg_buf[CONFIG_DMESG_SIZE];
 #define DMESGF(...) { snprintf(dmesg_buf, sizeof(dmesg_buf), __VA_ARGS__ ); prints(dev_dmesg, dmesg_buf);}
 #define DMESG(x) prints(dev_dmesg, x)

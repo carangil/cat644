@@ -147,6 +147,11 @@ RAMCTRL_PORT &= ~RAMCTRL_OE_MASK  ; \
 
 #ifndef __ASSEMBLER__
 
+
+/* Addr is 'word address' */
+/* cnt is bytes */
+/* 0-32767 are video, 32768-65535 are 'normal' */
+
 void memcpyx2i( char* internal, unsigned int addr,  unsigned int cnt) ;
 
 void memcpyi2x(unsigned int addr, char* internal, unsigned int cnt);

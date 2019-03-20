@@ -196,16 +196,17 @@ static uchar cy=0;
 #define FONT_HEIGHT 8
 #define FONT_WIDTH	8
 
+#define CW 6
 void vga_putc(chardevice_t* dev, unsigned char c)
 {
 
 	if (c=='\n'){
-		drawchar(cx, cy, 0x16, WHITE, BLACK);
+		//drawchar(cx, cy, 0x16, WHITE, BLACK);
 		cx=0;
 		cy+= FONT_HEIGHT;
 	} else {
 		drawchar(cx, cy, c, WHITE, BLACK);
-		cx+=6;  //try slender font
+		cx+=CW;  
 	}
 	
 	if (cx >= MAXX){
@@ -218,7 +219,8 @@ void vga_putc(chardevice_t* dev, unsigned char c)
 		
 		for (j=cx;j<MAXX;j++)
 			drawchar(j, cy, ' ', WHITE, BLACK);
-			
+		
+					
 		vscroll +=8; 
 	}
 	drawchar(cx, cy, '_', WHITE, BLACK);

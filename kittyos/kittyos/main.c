@@ -135,6 +135,12 @@ extern instr0();
 unsigned char vstack[100];
 extern char program[];
 
+
+void xalloc_init(unsigned int heap_start, unsigned int heap_end);
+void xdump();
+unsigned int xalloc(unsigned int);
+
+
 int main(void)
 {	
 //	static char buf[50];
@@ -179,6 +185,20 @@ int main(void)
 	DMESG("DMESG=scr\r\n");
 	DMESG("VER 0.2 "  __DATE__ " " __TIME__  " \r\n");
 
+
+	mminit();
+	mmdump();
+	mmalloc(100);
+	mmdump();
+
+
+	dev_dmesg = &dev_ser0;
+    xalloc_init(32768,65535);
+	xdump();
+	
+	xalloc(100);
+	xalloc(512);
+	xalloc(200);
 	
 	#if 1
 	{

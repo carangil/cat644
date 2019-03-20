@@ -6,7 +6,7 @@
 volatile int x;
 volatile char xc;
 
-uchar staticheap[1024*3];
+//uchar staticheap[1024*3];
 
 unsigned int syscall(unsigned int arg0, unsigned char callnum, unsigned int arg1)
 {
@@ -18,8 +18,8 @@ unsigned int syscall(unsigned int arg0, unsigned char callnum, unsigned int arg1
 	
 		switch (callnum){
 			
-			case SYSCALL_GET_HEAP:
-				return (unsigned int) staticheap;
+	//		case SYSCALL_GET_HEAP:
+		//		return (unsigned int) staticheap;
 				
 			case SYSCALL_READ1:
 				cdev = (void*) arg1;
