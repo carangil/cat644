@@ -20,7 +20,7 @@
 
 void debug(char* x);
 typedef unsigned char uchar;
-
+typedef unsigned int u16;
 
 
 #endif /* AVRSTUFF_H_ */

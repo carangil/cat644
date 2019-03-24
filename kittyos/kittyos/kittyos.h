@@ -29,7 +29,12 @@ uint16_t reads( chardevice_t* dev, char* str, uint16_t buffersize, unsigned char
 
 extern chardevice_t dev_keyraw;
 
+//Not a typedef... don't want to have to cast between u16 and handles... clutters the code a bit
+#define handle_t u16
 
+handle_t halloc(u16 bytes);
+void* hgrab(u16 handle_t);
+handle_t hrelease(void* p);
 
 
 

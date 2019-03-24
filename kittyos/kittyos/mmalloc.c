@@ -1,10 +1,13 @@
 #include "kittyos.h"
+ 
+
 
 #ifndef __AVR__
 	#include <stdio.h>
 	#define DMESGF printf
 #endif
 
+//#define DMESGF(...) 
 
 //change if needed
 
@@ -64,9 +67,17 @@ void mmdump(){
 		}
 		char* datastart = (char*) (mh+1); //data starts past header
 		char* dataend = datastart + SIZEBYTES(*mh);
-		DMESGF("header %p  %p to %p   %d bytes actual, %d bytes should, next header %p flags %x ref %x\n", 
+		
+		
+		
+		DMESGF("header %p  %p to %p   %d bytes actual, %d bytes should, next header %p flags %x ref %x\r\n", 
 			mh,
 			datastart, dataend, dataend-datastart, SIZEBYTES(*mh), dataend, (*mh)&(MASK_FLAGS), (*mh)&MASK_REF);
+			
+			if ((*mh)&FLAG_HANDLE) {
+				DMESGF("^^HANDLE: %x\r\n", * (u16*)(mh+1+SIZEW(*mh)-1 ) )
+				
+			}
 
 		heap = (u16*) dataend;
 
@@ -75,7 +86,10 @@ void mmdump(){
 	DMESGF("--\n");
 }
 
-void* mmalloc(u16 size){
+
+#define MAXFREEBLOCK 257
+
+void* mmalloc_handle(u16 size, u16 handle){
 
 	if (size > 512)
 		return NULL; //too big
@@ -83,10 +97,13 @@ void* mmalloc(u16 size){
 	// round up odd allocations
 	if (size &1)
 		size++; 
-
+		
 	//convert size to words
 	size = size >> 1;
-
+	
+	if(handle)  //if item needs handle, expand size.  This may create 257 word allocations!  But there are enough bits in the header to actually permit up to 511 words
+		size++;
+		
 	u16 wsize;
 
 	u16* heap = mheap;
@@ -110,17 +127,28 @@ void* mmalloc(u16 size){
 			if (remainder == 0) {
 				//perfect fit, mark as not free, reference count 1
 				(*mh) = ((*mh) & MASK_SIZEW) | REF_INC ;
+				
+				if (handle) {
+					//store handle after object
+					(*mh)|= FLAG_HANDLE;
+					*(mh+1+size-1)= handle;  //mh is header +1 is past header + size is past object, -1 is next to last of object
+				}
+				
 				return mh+1;
 			}
 
 			//shrink this block
 			(*mh) = size | REF_INC;
 
-			//create next block with remained
+			//create next block with remainder
 			mhnext = mh+1+size;
 			remainder--; //make space for block header
 			(*mhnext) = FLAG_FREE | remainder;
-
+			if (handle) {	
+				//store handle after object
+				(*mh)|= FLAG_HANDLE;
+				*(mh+1+size-1)= handle;  //mh is header +1 is past header + size is past object, -1 is next to last of object
+			}
 			return mh+1;
 		}
 
@@ -129,12 +157,12 @@ void* mmalloc(u16 size){
 		if ( (*mh & FLAG_FREE) &&  (*mhnext & FLAG_FREE)   ) {
 			//two free blocks in a row.  Combine them
 			u16 newsize = SIZEW(*mh) + 1 + SIZEW(*mhnext);
-			if (newsize > 256) {
+			if (newsize > MAXFREEBLOCK) {
 
 				//DMESGF(" Make block too big! Split\n");
-				u16 remainder = newsize - 256 - 1;
-				newsize = 256;
-				mhnext = mh + 1 + 256;
+				u16 remainder = newsize - MAXFREEBLOCK - 1;
+				newsize = MAXFREEBLOCK;
+				mhnext = mh + 1 + MAXFREEBLOCK;
 				(*mhnext) = remainder  | FLAG_FREE;
 				
 			}
@@ -150,6 +178,11 @@ void* mmalloc(u16 size){
 	return NULL;
 
 }
+
+void* mmalloc(u16 size){
+	return mmalloc_handle(size,0);
+}
+
 
 
 void mmfree(void* v){
@@ -169,6 +202,7 @@ void mmfree(void* v){
 	if ( ((*mh) & MASK_REF) == 0) {
 //		DMESGF("MARK FREE\n");
 		(*mh) |= FLAG_FREE; //mark as free
+
 		return;
 	}
 
@@ -176,6 +210,10 @@ void mmfree(void* v){
 }
 
 void* mmaddref(void* v){
+
+	//can't add reference to null
+	if (!v)
+		return NULL;
 
 	mheader_t* mh = (mheader_t*) v;
 	mh-- ; //go to header
@@ -190,5 +228,60 @@ void* mmaddref(void* v){
 	return v;
 }
 
+u16 mmrefcount(void* v) {
+	
+	//can't add reference to null
+	if (!v)
+		return 0;
+
+	mheader_t* mh = (mheader_t*) v;
+	mh-- ; //go to header
+	
+	return ((*mh) & MASK_REF);
+}
+
+//find item, linear walk of heap
+//todo: need a simple cache, maybe just 2-way associative or whatever
+
+void* mmfindhandle(u16 handle){
+	u16* heap = mheap;
+	u16 found;
+	
+	while(1){
+		mheader_t* mh = (mheader_t*) heap;
+		if ((heap -  mheap) >= HSIZE ) {
+			break;
+		}
+		char* datastart = (char*) (mh+1); //data starts past header
+		char* dataend = datastart + SIZEBYTES(*mh);
+	
+		if ( ((*mh)&FLAG_HANDLE) &&!((*mh)&FLAG_FREE)) {
+			
+			found = * (u16*)(mh+1+SIZEW(*mh)-1 );
+			if (found == handle)
+				return datastart;		
+		}
+
+		heap = (u16*) dataend;
+	}
+	return NULL;
+}
 
 
+
+u16 mmgethandle(void* v){
+	
+	
+	//can't add reference to null
+	if (!v)
+		return 0;
+
+	mheader_t* mh = (mheader_t*) v;
+	mh-- ; //go to header
+	
+	if (! (*mh & FLAG_HANDLE))
+		return 0;
+	
+	return *  (u16*) (mh+1+ SIZEW(*mh)-1);
+
+}

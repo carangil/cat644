@@ -185,20 +185,47 @@ int main(void)
 	DMESG("DMESG=scr\r\n");
 	DMESG("VER 0.2 "  __DATE__ " " __TIME__  " \r\n");
 
-
+dev_dmesg = &dev_ser0;
 	mminit();
-	mmdump();
-	mmalloc(100);
-	mmdump();
-
-
-	dev_dmesg = &dev_ser0;
-    xalloc_init(32768,65535);
-	xdump();
+	//mmdump();
+	mmalloc(200);
+	void* v1  = mmalloc_handle(200, 0x55);
+	void* v2 = mmalloc_handle(230, 0x1033);
+	void* v3 = mmalloc_handle(512, 0x5556);
+	//mmdump();
+	DMESGF("H %x %x %x\r\n", mmgethandle(v1), mmgethandle(v2) ,  mmgethandle(v3)  );
 	
-	xalloc(100);
-	xalloc(512);
-	xalloc(200);
+	DMESGF("P %p %p %p\r\n", v1,v2,v3);
+	
+	DMESGF("P %p %p %p\r\n", mmfindhandle(0x55) ,mmfindhandle(0x1033),mmfindhandle(0x5556));
+	
+
+	
+    xalloc_init(32768,65535);
+	//xdump();
+	
+	//xalloc(100);
+	char* s = "This is a string";
+	
+	char * hp;
+	char * hp2;
+	
+	u16 h = halloc(strlen(s)+1);
+	hp = hgrab(h);
+	hp2 = hgrab(h); //get again
+	DMESGF("hp %p  hp2 %p\r\n", hp, hp2);
+	
+	strcpy(hp, s);  //copy it
+	
+	hrelease(hp);
+	hrelease(hp2);
+	
+	char* other = mmalloc(10); //take up some memory (should overhap old hp)
+	DMESGF("other %p\r\n", other);
+			
+	hp = hgrab(h);
+	DMESGF("hp %x %s\r\n",hp,hp);
+	
 	
 	#if 1
 	{

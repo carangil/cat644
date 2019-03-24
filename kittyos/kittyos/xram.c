@@ -8,6 +8,10 @@
 #include "xram.h"
 #include "kittyos.h"
 
+//disable debug prints
+#define DMESGF(...)
+
+
 volatile unsigned char lastpage=0;
 
 void xram_init()
@@ -142,7 +146,7 @@ unsigned int xpeek(unsigned int addr){
 void xpoke(unsigned int addr, unsigned int val){
 	unsigned int ret = val;
 	
-	memcpyi2x(addr, &ret, 2);
+	memcpyi2x(addr, (void*) &ret, 2);
 	
 }
 
@@ -195,7 +199,12 @@ void xalloc_init(unsigned int heap_start, unsigned int heap_end){
 	
 }
 
+u16 xsize(u16 xp){
+	return SIZEBYTES(xpeek(xp-1)); //-1 is to get to header
+}
+
 void xdump(){
+#if 0
 	u16 heap = hs;
 	DMESGF("mem:\n");
 	while(1){
@@ -205,15 +214,16 @@ void xdump(){
 		}
 		u16 datastart =  (mh+1); //data starts past header
 		u16 dataend = datastart + SIZEW(  xpeek(mh)   );
-		DMESGF("h %p %p to %p, %d words, next @ %p flags %x ref %x\r\n",
+		DMESGF("h %p %p to %p, %d words %d, next @ %p flags %x ref %x\r\n",
 		mh,
-		datastart, dataend, dataend-datastart, dataend, xpeek(mh)&(MASK_FLAGS), xpeek(mh)&MASK_REF);
+		datastart, dataend, dataend-datastart, xsize(datastart), dataend, xpeek(mh)&(MASK_FLAGS), xpeek(mh)&MASK_REF);
 
 		heap =  dataend;
 
 		
 	}
 	DMESGF("--\n");
+#endif
 }
 
 void* xalloc(u16 size){
@@ -296,3 +306,4 @@ void* xalloc(u16 size){
 	return NULL;
 
 }
+

@@ -125,7 +125,7 @@
   </avrgcc.linker.libraries.Libraries>
   <avrgcc.linker.memorysettings.Flash>
     <ListValues>
-      <Value>vmhandlers=0x1700</Value>
+      <Value>vmhandlers=0x1800</Value>
     </ListValues>
   </avrgcc.linker.memorysettings.Flash>
   <avrgcc.assembler.general.IncludePaths>
@@ -151,6 +151,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="font.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="halloc.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="interpreter.h">
