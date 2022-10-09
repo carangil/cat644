@@ -129,7 +129,7 @@ device_t * findDevice(char* name){
 #define CONFIG_SER0_BAUD	9600
 
 extern instr0();
-
+extern instrlast();
 
 
 unsigned char vstack[100];
@@ -140,7 +140,7 @@ void xalloc_init(unsigned int heap_start, unsigned int heap_end);
 void xdump();
 unsigned int xalloc(unsigned int);
 
-
+unsigned int syscall(unsigned int arg0, unsigned char callnum, unsigned int arg1, unsigned int arg2);
 int main(void)
 {	
 //	static char buf[50];
@@ -153,7 +153,7 @@ int main(void)
    	DDRA=0;    //all input
    	PORTA=0xff;   //pullup
 
- 
+	//syscall(0x2524, 0xcc, 0x2120, 0x1918);
    //initialize serial port
   
    DMESG("Kernel start\r\n");  //testing that unitialized console does nothing bad
@@ -168,7 +168,7 @@ int main(void)
      
 	DMESG("Hello in Kernel.\r\n");
 	
-	DMESGF("instr0:%x\r\n", (unsigned int) instr0);	
+	DMESGF("instr0:%x %x\r\n", (unsigned int) instr0, (unsigned int) instrlast);	
 
 	xram_init();  
 	vga_init();

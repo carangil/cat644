@@ -24,8 +24,8 @@ void vga_init()
 
 	dev_scr.dev.flags=0;
 
-	vidptr = vidfull;
-	//vidptr = vidskippy;
+	//vidptr = vidfull;
+	vidptr = vidskippy;
 
 	
 	

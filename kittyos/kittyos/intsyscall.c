@@ -8,11 +8,11 @@ volatile char xc;
 
 //uchar staticheap[1024*3];
 
-unsigned int syscall(unsigned int arg0, unsigned char callnum, unsigned int arg1)
+unsigned int syscall(unsigned int arg0, unsigned char callnum, unsigned int arg1, unsigned int arg2)
 {
 	chardevice_t* cdev;
 	
-//	DMESGF("SYSCALL %x arg0 %x  arg1 %x\n", (unsigned int) callnum, arg0, arg1);
+	DMESGF("SYSCALL %x arg0 %x  arg1 %x arg2 %x\n", (unsigned int) callnum, arg0, arg1, arg2);
 	
 	#if 1
 	

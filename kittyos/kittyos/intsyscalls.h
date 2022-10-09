@@ -9,7 +9,7 @@
 #ifndef INTSYSCALLS_H_
 #define INTSYSCALLS_H_
 
-unsigned int syscall(unsigned int arg0, unsigned char callnum, unsigned int arg1);
+unsigned int syscall(unsigned int arg0, unsigned char callnum, unsigned int arg1, unsigned int arg2);
 
 #define SYSCALL_FIND_DEV	1
 #define SYSCALL_WRITE1		2

@@ -517,6 +517,8 @@ global_label(vm_extension)
 rjmp tablefunc
 
 //last handler only has to begin in this page.. it can be outside
+
+
 global_label(instrlast)
 global_label(vm_syscall)
 
@@ -531,7 +533,8 @@ global_label(vm_syscall)
 	//register AH:AL is already in the 1st 16-bit slot for a C function; this will be arg0 (1st arg to c function)
 
 	movw  r20, BL  //set up B as 2nd syscall org (3rs to C cfunction)
-
+	
+	movw  r18, CL //3rd arg, 4th C value
 
 	call syscall	//return value is already in register 'A'
 
@@ -541,7 +544,6 @@ global_label(vm_syscall)
 	SETZH
 	DISPATCHLD
 	DISPATCHJ
-
 
 
 interpreter:
