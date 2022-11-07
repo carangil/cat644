@@ -19,8 +19,8 @@
 #define SDCARD_SPI_OPTIONS  SPI_MASTER | SPI_CLK_8
 
 void sdcard_init(unsigned long* pcapacity);
-
-
+uchar sdcard_write_block(blockdevice_t* bdev, long blockaddr, char* buffer, unsigned int numbytes);
+uchar sdcard_read_block(blockdevice_t* bdev,long blockaddr, char* buffer, unsigned int numbytes);
 
 
 #endif /* INCFILE1_H_ */

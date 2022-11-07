@@ -12,6 +12,9 @@
 #include "xram.h"
 #include "mmalloc.h"
 
+//configure serial port
+#define CONFIG_SER0_BAUD	9600
+
 typedef struct environment_s {
 	chardevice_t* in;
 	chardevice_t* out;
@@ -42,7 +45,7 @@ handle_t hrelease(void* p);
 
 
 
-#define CONFIG_DMESG_SIZE	512
+#define CONFIG_DMESG_SIZE	128
 extern char dmesg_buf[CONFIG_DMESG_SIZE];
 #define DMESGF(...) { snprintf(dmesg_buf, sizeof(dmesg_buf), __VA_ARGS__ ); prints(dev_dmesg, dmesg_buf);}
 #define DMESG(x) prints(dev_dmesg, x)

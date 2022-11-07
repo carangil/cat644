@@ -159,7 +159,11 @@ void memcpyi2x(unsigned int addr, char* internal, unsigned int cnt);
 extern volatile unsigned char lastpage;
 void xram_init();
 
-
+void* xalloc(u16 size);
+void xdump(); //for debug
+void xfree(u16 xp);
+u16 xsize(u16 xp);
+void xalloc_init(unsigned int heap_start, unsigned int heap_end);
 
 #endif
 

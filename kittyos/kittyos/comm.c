@@ -78,7 +78,10 @@ void comm_putc(chardevice_t* dev, unsigned char c)
 uchar comm_getc(chardevice_t* dev)
 {
 	while(!COMM_READ_READY);
-	return UDR0;
+	char c = UDR0;
+	if (c==27)
+		wdt_enable(0);  //enable watchdog timer.  don't have it set up, so this actually triggers a cpu reset instead!
+	return c;
 
 }
 

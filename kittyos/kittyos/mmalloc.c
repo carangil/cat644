@@ -22,7 +22,7 @@
 
 typedef u16 mheader_t;
 
-#define HSIZE 1024
+#define HSIZE 800
 u16 mheap[HSIZE];  //heap size, in 16-bit words
 
 #define SIZEBYTES(h)  (((h)&MASK_SIZEW)<<1)

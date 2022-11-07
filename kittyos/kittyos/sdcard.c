@@ -23,10 +23,13 @@ static uchar spi_inout(uchar c){
 	uchar d;
 	
 	dev_spi0.chardev.write1(&dev_spi0.chardev,c);
-	return dev_spi0.chardev.read1(&dev_spi0.chardev);
+	d = dev_spi0.chardev.read1(&dev_spi0.chardev);
+	//DMESGF("%x>%x;", c, d);
+	return d;
 	
 }
 
+//send command to sdcard.  command must already have 0x40 set in the byte
 unsigned char sdcard_send(unsigned char cmd, uint32_t parm)
 {
 	unsigned char resp = 0;
@@ -39,33 +42,29 @@ unsigned char sdcard_send(unsigned char cmd, uint32_t parm)
 	spi_inout(parm & 0xff);
 	spi_inout(0x95);  /* checksum for cmd '0|40'.  all other cmds this will be ignored if we are in spi mode */
 	
-	while(1)
-	{
+	for (tries=0;tries < 1000;tries++) {
+	
 		resp = spi_inout(0xff);
 		/* 1st bit will go low when response is done */
-				
+
 		if (! (resp & 0x80 ) )
-			return resp;
-	
-		tries++;
-		if ( tries > 1000 )	
-			break;
-	
+			return resp;	
 	}
-	
+	DMESG("cmdtimeout\r\n");
 	return SDCARD_SEND_TIMEOUT;
 }
 
 void sdcard_enable()
 {
 	//low bit	
+	//DMESG("SDLOW\r\n");
 	SDCARD_CS_PORT &= ~ SDCARD_CS;
 }
 
 void sdcard_disable()
 {
 	//high bit
-	
+	//DMESG("SDHIGH\r\n");
 	SDCARD_CS_PORT |=  SDCARD_CS;
 	SDCARD_CS_DDR |= SDCARD_CS;
 	
@@ -155,18 +154,18 @@ void sdcard_init(unsigned long* pcapacity)
 	char r=0;
 	char i;
 	
-	int trycount=0;
+	//int trycount=0;
 		
 	//spi_enable();
 	dev_spi0.chardev.dev.ioctl(&dev_spi0, IOCTL_LOCK, SDCARD_SPI_OPTIONS);
 	
 	while (r != 0x01 ){
-		DMESG("Attempt init sdcard\n");
+		DMESG("Attempt init sdcard\r\n");
 	
 		SDCARD_CS_PORT |=  SDCARD_CS;
 		SDCARD_CS_DDR |= SDCARD_CS;
 	
-		DMESG("init1\n");
+		DMESG("init1\r\n");
 	
 		for(i=0; i<10; i++) // idle for 10 bytes / 80 clocks
 			spi_inout(0xFF);
@@ -197,10 +196,9 @@ void sdcard_init(unsigned long* pcapacity)
 	
 	/* set block size */
 	sdcard_enable();
-	sdcard_send(0x50, 512);
+	r = sdcard_send(0x40 | 16, 512);
 	sdcard_disable();
-	
-	
+		
 	if(pcapacity)
 		*pcapacity = sdcard_get_size();
 		
@@ -213,21 +211,17 @@ void sdcard_enable_waitbusy(){
 	uchar x;
 	
 	dev_spi0.chardev.dev.ioctl(&dev_spi0, IOCTL_LOCK, SDCARD_SPI_OPTIONS);
+	spi_inout(0xff);
 	sdcard_enable();
-		
+	x = spi_inout(0xff);
+	DMESGF( "[Bs%d]", x);
 	while(1){
 		
 		x = spi_inout(0xff);
 		
-		sdcard_disable();  //card off
-			
-		
-		sdcard_enable();  //card on
-		
+		DMESGF( "[B%d]", x);
 		if (x != 0x00)  //was OK
 			break;
-		DMESGF( "[B%d]", x);
-		
 	}
 	
 }
@@ -244,10 +238,11 @@ uchar sdcard_read_block(blockdevice_t* bdev,long blockaddr, char* buffer, unsign
 	sdcard_enable_waitbusy();
 	
 	r = sdcard_send(0x51, blockaddr <<9 );
-	
+	DMESGF ("RBR%d;",r)
 	while (r!= 0xFE)
 	{
 		r = spi_inout(0xff)		;
+		DMESGF("r%d;", r);
 	}
 	
 		
@@ -272,7 +267,7 @@ uchar sdcard_read_block(blockdevice_t* bdev,long blockaddr, char* buffer, unsign
 	spi_inout(0xff);
 	
 	sdcard_disable();
-	//spi_disable();
+	spi_disable();
 	dev_spi0.chardev.dev.ioctl(&dev_spi0, IOCTL_UNLOCK, 0);
 	
 	if (r == 0xfe)
@@ -295,9 +290,11 @@ uchar sdcard_write_block(blockdevice_t* bdev, long blockaddr, char* buffer, unsi
 	
 	
 	r = sdcard_send(0x58, blockaddr <<9 );
-
-
-	spi_inout(0xff); /* dummy */
+	DMESGF ("WBR%d;",r)
+	if (r!= 0)
+		return 0; //fail
+		
+	//spi_inout(0xff); /* dummy */
 	
 	spi_inout(0xfe); /* data marker */
 	
@@ -310,9 +307,8 @@ uchar sdcard_write_block(blockdevice_t* bdev, long blockaddr, char* buffer, unsi
 	
 	for (;i<512;i++) 
 	{
-		spi_inout(0xab);		/*dummy data for unused part of block */
+		spi_inout(0xaa);		/*dummy data for unused part of block */
 	}
-	
 	
 	//send dummy checksum
 	spi_inout(0xff);
@@ -321,13 +317,13 @@ uchar sdcard_write_block(blockdevice_t* bdev, long blockaddr, char* buffer, unsi
 	r = spi_inout(0xff);  //get return value
 	
 
-	//sdcard_disable();
+	sdcard_disable();
 	dev_spi0.chardev.dev.ioctl(&dev_spi0, IOCTL_UNLOCK, 0);
 
 	r &= 0x1F;  /* Must mask response */
 
 	if (r == 0x05){
-		debug("[Wsuccess]");
+		DMESG("[Wsuccess]");
 		return 1;  //success	(data was accepted)
 	}
 	

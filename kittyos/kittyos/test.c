@@ -74,7 +74,7 @@ unsigned int test_main(environment_t* env){
 
 	while(1){
 		
-		unsigned char i;
+		//unsigned char i;
 
 		//hscroll +=2;
 	//	vga_delay(4);

@@ -84,6 +84,11 @@
             <Value>libm</Value>
           </ListValues>
         </avrgcc.linker.libraries.Libraries>
+        <avrgcc.linker.memorysettings.Flash>
+          <ListValues>
+            <Value>vmhandlers=0x1000</Value>
+          </ListValues>
+        </avrgcc.linker.memorysettings.Flash>
         <avrgcc.assembler.general.IncludePaths>
           <ListValues>
             <Value>%24(PackRepoDir)\atmel\ATmega_DFP\1.1.130\include</Value>
@@ -125,7 +130,7 @@
   </avrgcc.linker.libraries.Libraries>
   <avrgcc.linker.memorysettings.Flash>
     <ListValues>
-      <Value>vmhandlers=0x1800</Value>
+      <Value>vmhandlers=0x2000</Value>
     </ListValues>
   </avrgcc.linker.memorysettings.Flash>
   <avrgcc.assembler.general.IncludePaths>
@@ -187,6 +192,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="kittyos.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="llfs.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="llfs.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="main.c">

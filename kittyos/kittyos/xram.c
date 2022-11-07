@@ -9,7 +9,7 @@
 #include "kittyos.h"
 
 //disable debug prints
-#define DMESGF(...)
+//#define DMESGF(...)
 
 
 volatile unsigned char lastpage=0;
@@ -156,8 +156,8 @@ void xpoke(unsigned int addr, unsigned int val){
 #define FLAG_FREE	0x8000  /* 1000 0000 0000 0000 */
 #define FLAG_HANDLE	0x4000  /* 0100 0000 0000 0000 */
 #define MASK_SIZEW	0x01FF  /* 0000 0001 1111 1111 */
-#define MASK_REF	0x3E00  /* 0011 1110 0000 0000 */
-#define REF_INC		0x0200  /* 0000 0010 0000 0000 */
+//#define MASK_REF	0x3E00  /* 0011 1110 0000 0000 */
+//#define REF_INC		0x0200  /* 0000 0010 0000 0000 */
 
 
 typedef uint16_t u16;
@@ -199,14 +199,19 @@ void xalloc_init(unsigned int heap_start, unsigned int heap_end){
 	
 }
 
-u16 xsize(u16 xp){
+unsigned int xsize(u16 xp){
 	return SIZEBYTES(xpeek(xp-1)); //-1 is to get to header
 }
 
+void xfree(u16 xp){
+	xpoke( xp-1 , xpeek(xp-1) | FLAG_FREE);
+	
+}
+
 void xdump(){
-#if 0
+#if 1
 	u16 heap = hs;
-	DMESGF("mem:\n");
+	DMESGF("xmem:\n");
 	while(1){
 		u16 mh = heap;
 		if ((heap-1) >= he) {
@@ -214,9 +219,9 @@ void xdump(){
 		}
 		u16 datastart =  (mh+1); //data starts past header
 		u16 dataend = datastart + SIZEW(  xpeek(mh)   );
-		DMESGF("h %p %p to %p, %d words %d, next @ %p flags %x ref %x\r\n",
+		DMESGF("h %p %p to %p, %d words %d, next @ %p flags %x \r\n",
 		mh,
-		datastart, dataend, dataend-datastart, xsize(datastart), dataend, xpeek(mh)&(MASK_FLAGS), xpeek(mh)&MASK_REF);
+		datastart, dataend, dataend-datastart, xsize(datastart), dataend, xpeek(mh)&(MASK_FLAGS));
 
 		heap =  dataend;
 
@@ -260,14 +265,14 @@ void* xalloc(u16 size){
 			u16 remainder = wsize-size;
 
 			if (remainder == 0) {
-				//perfect fit, mark as not free, reference count 1
-				xpoke(mh, (xpeek(mh) & MASK_SIZEW) | REF_INC );
+				//perfect fit, mark as not free
+				xpoke(mh, (xpeek(mh) & MASK_SIZEW)  );
 				return mh+1;
 			}
 
 			//shrink this block
 			//(*mh) = size | REF_INC;
-			xpoke(mh,  size | REF_INC);
+			xpoke(mh,  size /*| REF_INC*/);
 
 			//create next block with remained
 			mhnext = mh+1+size;

@@ -397,20 +397,20 @@ global_label(vm_pop_a) //untested
 
 	
 global_label(vm_pop_b) //untested
-	ld AL, VSP+
-	ld AH, VSP+
+	ld BL, VSP+
+	ld BH, VSP+
 	DISPATCHLD
 	DISPATCHJ
 
 global_label(vm_pop_c) //untested
-	ld AL, VSP+
-	ld AH, VSP+
+	ld CL, VSP+
+	ld CH, VSP+
 	DISPATCHLD
 	DISPATCHJ
 
 global_label(vm_pop_d) //untested
-	ld AL, VSP+
-	ld AH, VSP+
+	ld DL, VSP+
+	ld DH, VSP+
 	DISPATCHLD
 	DISPATCHJ
 

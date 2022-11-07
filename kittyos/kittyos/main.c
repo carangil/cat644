@@ -11,7 +11,7 @@
 #include "keyps2.h"
 #include "spi.h"
 #include "sdcard.h"
-
+#include "llfs.h"
 
 
 //way to output messages to console
@@ -105,7 +105,7 @@ muxdevice_t mainmux = { {NULL,0}, main_select, main_first, main_next};
 device_t * findDevice(char* name){
 	
 	muxdevice_t* m = &mainmux;
-	deviceinfo_t info;
+	//deviceinfo_t info;
 	deviceinfo_t di;
 	
 	if ( m->first(m, &di) ){
@@ -125,20 +125,17 @@ device_t * findDevice(char* name){
 
 
 
-//configure serial port
-#define CONFIG_SER0_BAUD	9600
 
-extern instr0();
-extern instrlast();
+
+extern void instr0();
+extern void instrlast();
 
 
 unsigned char vstack[100];
 extern char program[];
 
 
-void xalloc_init(unsigned int heap_start, unsigned int heap_end);
-void xdump();
-unsigned int xalloc(unsigned int);
+
 
 unsigned int syscall(unsigned int arg0, unsigned char callnum, unsigned int arg1, unsigned int arg2);
 int main(void)
@@ -156,17 +153,15 @@ int main(void)
 	//syscall(0x2524, 0xcc, 0x2120, 0x1918);
    //initialize serial port
   
-   DMESG("Kernel start\r\n");  //testing that unitialized console does nothing bad
-  
-
-  
+   DMESG("KS\r\n");  //testing that unitialized console does nothing bad
+    
    if (SUCCESS == dev_ser0.dev.ioctl(&dev_ser0.dev, IOCTL_BAUD, CONFIG_SER0_BAUD)) {
 	   // if we initalized serial port, that becomes the output console
 	   dev_dmesg = &dev_ser0;
 	   DMESGF("DMESG=SER0 at %d\r\n", CONFIG_SER0_BAUD);
    }
      
-	DMESG("Hello in Kernel.\r\n");
+	DMESG("Kernel\r\n");
 	
 	DMESGF("instr0:%x %x\r\n", (unsigned int) instr0, (unsigned int) instrlast);	
 
@@ -183,11 +178,62 @@ int main(void)
 	dev_keyraw.dev.ioctl(&dev_keyraw.dev, IOCTL_ENABLE, 1);
 
 	DMESG("DMESG=scr\r\n");
-	DMESG("VER 0.2 "  __DATE__ " " __TIME__  " \r\n");
-
-dev_dmesg = &dev_ser0;
+	DMESG("VER 0.21 "  __DATE__ " " __TIME__  " \r\n");
+	
+	dev_dmesg = &dev_ser0;
+	unsigned long cap;
+	DMESG("card init\n");
+	sdcard_init(&cap); //init sdcard driver, get capacity
+	DMESG(" init disk\n");
+	//initDisk(cap); //format the disk (write some stuff to block 0)
+	mount(); //see if it mounts	
+	DMESG("mount\n");
+	
+	blockInfo pos;
+	blockRoot(&pos);
+	blockSetData(&pos, "ROOTBLOCK", 10);
+	
+	
+	blockAddFirstChild(&pos, "Hello SDCard", 13);
+	blockInsert(&pos, "Another block", 14);
+	blockInfo posChild = pos;	//copy the position object!
+	blockAddFirstChild(&posChild, "Child", 6);
+	blockAppendData(&pos, "-appending-block", 17 );  //editing the same 'file' but in two places at once!
+	blockAppendData(&posChild, "-appending-child", 17 );
+	
+	char str[20];
+	blockRoot(&pos);
+	blockReadData(&pos, str, 20);
+	DMESGF("%20s\r\n", str);
+	blockFirstChild(&pos);
+	blockReadData(&pos, str, 20);
+	DMESGF("%20s\r\n", str);
+	
+	unmount();
 	mminit();
-	//mmdump();
+	mmdump();
+	
+	xalloc_init(32768,65535);
+	//xdump();
+	
+	dev_dmesg = &dev_scr;
+	DMESGF("SDCARD size %ld\r\n", cap);
+	
+
+	dev_dmesg = &dev_ser0;
+	/*
+	void* a = xalloc(10);
+	void* b = xalloc(20);
+	void* c = xalloc(30);
+	xfree(b);
+	xdump();
+	xfree(a);
+	xfree(c);
+	xdump();
+	xalloc(55);
+	xdump();
+	*/
+	/*
 	mmalloc(200);
 	void* v1  = mmalloc_handle(200, 0x55);
 	void* v2 = mmalloc_handle(230, 0x1033);
@@ -248,10 +294,9 @@ dev_dmesg = &dev_ser0;
 	   	//env.cmdline= " testing";
 	   	//env.in = &dev_ser0;
 	   	//env.out = &dev_ser0;
+*/
 
-
-	
-	//interpreter never returns
+		//interpreter never returns
 	DMESGF("Start 16:$%x\n", (unsigned int) program);
 	interpreter(program, vstack + sizeof(vstack), NULL);
 	

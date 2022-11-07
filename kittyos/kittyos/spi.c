@@ -45,6 +45,7 @@ extern spi_device_t dev_spi0;
 uchar spi_ioctl(device_t* dev, uchar ctlnum, uint16_t param)
 {
 	
+	
 	if (ctlnum == IOCTL_LOCK) { 
 		
 		//The SPI lock makes sure only 1 thread uses SPI at a time, and that each time SPI is used, it is placed in the correct mode and speed

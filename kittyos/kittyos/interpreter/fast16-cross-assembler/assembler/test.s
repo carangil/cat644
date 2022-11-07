@@ -74,7 +74,7 @@ byte 0
 
 string ' 
 hello:
-string 'Hello World
+string 'Testing
 byte 0
 byte 7
 
